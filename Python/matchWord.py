@@ -70,7 +70,9 @@ if (__name__=="__main__"):
 				wordTopicDis.insert(1, average)
 				updatedMatrix.append(wordTopicDis)
 				count += 1
-			sortTopWords(updatedMatrix)
+			#updatedMatrix = sortTopWords(updatedMatrix)
+			updatedMatrix.sort(key=lambda line: float(line[1]), reverse=True) #Reverse settings for big-to-small
+			#sorted(updatedMatrix, key=lambda line: float(line[1]), reverse=True) This is not working
 			top20Words = updatedMatrix[0:19]
 			writeNewFile(dirName + "/test" + str(x) + "word.dat", updatedMatrix)
 			writeNewFile(dirName + "/test" + str(x) + "top20words.dat", top20Words)
