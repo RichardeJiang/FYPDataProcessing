@@ -4,9 +4,6 @@ import re
 
 class XmlParser:
 	''' The general-purpose Xml parser '''
-	# fileName = ""
-	# rootTag = ""
-	# targetTags = []
 
 	def __init__(self, fileList, rootTag, targetTags):
 		self.fileList = fileList
