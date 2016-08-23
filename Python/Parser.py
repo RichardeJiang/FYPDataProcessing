@@ -13,7 +13,7 @@ class XmlParser:
 
 	def parse(self):
 
-		count = 0
+		count = 1
 		result = ""
 
 		for fileName in self.fileList:

@@ -5,7 +5,7 @@ from Parser import XmlParser
 
 def writeToFile(filePath, content):
 	fp = open(filePath, 'w')
-	fp.write(content.encode('ascii', 'ignore'))  #otherwise there will be unicode problems
+	fp.write(content.encode('ascii', 'ignore'))  #otherwise there will be unicode encoding problems
 	fp.close()
 	return
 
@@ -47,14 +47,15 @@ if (__name__=='__main__'):
 			areaTitle = area
 			procTitle = proc
 
-	count = 0
+	count = 1
 	for procs in wholeList:
 		#print item
 		for areas in procs:
 			parsedValues = ""
 			#doc = "data-" + areas[0].split('-')[0] + "-" + areas[0].split('-')[1] + ".txt"
 			doc = "testPy/data-" + str(count) + ".txt"
-			count += 1
 			parsedValues = parseXml(areas)
-			writeToFile(doc, parsedValues)
+			if parsedValues.strip():
+				writeToFile(doc, parsedValues.strip())
+				count += 1
 	pass
