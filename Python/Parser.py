@@ -17,7 +17,7 @@ class XmlParser:
 			tagContents = article.getElementsByTagName(filterTag)
 
 			for tagContent in tagContents:
-				if (keyword in tagContent.childNodes[0].data):
+				if (keyword in tagContent.childNodes[0].data.lower()):
 					return True
 		
 		return False
@@ -28,10 +28,14 @@ class XmlParser:
 		result = ""
 
 		keyword = "software engineering"
-		filterList = ["kw", "ref_text", "cited_by_text"]
+		filterList = ["kw", "ref_text", "cited_by_text", "concept_desc", "subtitle"]
 
 		for fileName in self.fileList:
-			DOMTree = xml.dom.minidom.parse(fileName)
+			try:
+				DOMTree = xml.dom.minidom.parse(fileName)
+			except xml.parsers.expat.ExpatError, e:
+				print "The file causing the error is: ", fileName
+				print "The detailed error is: %s" %e
 			collection = DOMTree.documentElement
 
 			#articles = collection.getElementsByTagName("article_rec")
