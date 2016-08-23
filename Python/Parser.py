@@ -11,10 +11,24 @@ class XmlParser:
 		self.targetTags = targetTags
 		self.content = ""
 
+	def keyWordFilter(self, article, keyword, filterTags):
+		# the idea is to use citation, reference, keyword list to find software engineering related articles
+		for filterTag in filterTags:
+			tagContents = article.getElementsByTagName(filterTag)
+
+			for tagContent in tagContents:
+				if (keyword in tagContent.childNodes[0].data):
+					return True
+		
+		return False
+
 	def parse(self):
 
 		count = 1
 		result = ""
+
+		keyword = "software engineering"
+		filterList = ["kw", "ref_text", "cited_by_text"]
 
 		for fileName in self.fileList:
 			DOMTree = xml.dom.minidom.parse(fileName)
@@ -27,51 +41,55 @@ class XmlParser:
 
 			for article in articles:
 
-				for tag in self.targetTags:
-					tagContents = article.getElementsByTagName(tag)
-					#print tagContent
+				if not self.keyWordFilter(article, keyword, filterList):
+					pass
+				else:
 
-					if (tag != "article_publication_date"):
-						for tagContent in tagContents:
-							tagContent = re.sub(r'<.*?>', "", tagContent.childNodes[0].data)
-							tagContent = re.sub(r'\"', "", tagContent)
-							# tagContent = regexBracket.sub("", tagContent)
-							# tagContent = regexQuote.sub("", tagContent)
-							self.content += tagContent
-							self.content += " "
+					for tag in self.targetTags:
+						tagContents = article.getElementsByTagName(tag)
+						#print tagContent
 
-					else:
-						for time in tagContents:
-							timeList = time.childNodes[0].data.split("-")
-							timing = timeList[len(timeList) - 1]
-							self.content = timing + " " + self.content
-				# titles = article.getElementsByTagName("title")
-				# abstracts = article.getElementsByTagName("par")
-				# timeStamp = article.getElementsByTagName("article_publication_date")
+						if (tag != "article_publication_date"):
+							for tagContent in tagContents:
+								tagContent = re.sub(r'<.*?>', "", tagContent.childNodes[0].data)
+								tagContent = re.sub(r'\"', "", tagContent)
+								# tagContent = regexBracket.sub("", tagContent)
+								# tagContent = regexQuote.sub("", tagContent)
+								self.content += tagContent
+								self.content += " "
 
-				# for title in titles:
-				# 	title = regexBracket.sub("", title)
-				# 	title = regexQuote.sub("", title)
-				# 	self.content += title
-				# 	self.content += " "
+						else:
+							for time in tagContents:
+								timeList = time.childNodes[0].data.split("-")
+								timing = timeList[len(timeList) - 1]
+								self.content = timing + " " + self.content
+					# titles = article.getElementsByTagName("title")
+					# abstracts = article.getElementsByTagName("par")
+					# timeStamp = article.getElementsByTagName("article_publication_date")
 
-				# for abstract in abstracts:
-				# 	abstract = regexBracket.sub("", abstract)
-				# 	abstract = regexQuote.sub("", abstract)
-				# 	self.content += abstract
-				# 	self.content += " "
+					# for title in titles:
+					# 	title = regexBracket.sub("", title)
+					# 	title = regexQuote.sub("", title)
+					# 	self.content += title
+					# 	self.content += " "
 
-				# for time in timeStamp:
-				# 	timeList = time.split('-')
-				# 	timing = timeList[len(timeList) - 1]
-				# 	self.content = timing + " " + self.content
-				if (len(self.content.split(" ")) <= 20):
-					continue
+					# for abstract in abstracts:
+					# 	abstract = regexBracket.sub("", abstract)
+					# 	abstract = regexQuote.sub("", abstract)
+					# 	self.content += abstract
+					# 	self.content += " "
 
-				if self.content:
-					self.content = self.content.strip()
-					result += (str(count) + " en " + self.content + "\n")
-					self.content = ""
-					count += 1
+					# for time in timeStamp:
+					# 	timeList = time.split('-')
+					# 	timing = timeList[len(timeList) - 1]
+					# 	self.content = timing + " " + self.content
+					if (len(self.content.split(" ")) <= 20):
+						continue
+
+					if self.content:
+						self.content = self.content.strip()
+						result += (str(count) + " en " + self.content + "\n")
+						self.content = ""
+						count += 1
 
 		return result
