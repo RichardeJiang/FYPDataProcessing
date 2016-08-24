@@ -22,33 +22,6 @@ if (__name__=='__main__'):
 		if fileName.endswith('.xml'):
 			fileList.append(fileName)
 
-	# procTitle = fileList[0].split('-')[0]
-	# areaTitle = fileList[0].split('-')[1]
-	# wholeList = []
-	# procList = []
-	# areaList = []
-	# for name in fileList:
-	# 	contents = name.split('-')
-	# 	proc = contents[0]
-	# 	area = contents[1]
-	# 	if (procTitle == proc):
-	# 		if (areaTitle == area):
-	# 			pass
-	# 		else:
-	# 			procList.append(areaList)
-	# 			areaList = []
-	# 			areaTitle = area
-	# 		areaList.append(name)
-	# 	else:
-	# 		procList.append(areaList)
-	# 		wholeList.append(procList)
-	# 		procList = []
-	# 		areaList = []
-	# 		areaTitle = area
-	# 		procTitle = proc
-
-	# count = 1
-
 	# this is the part for consolidating all corpus into one single doc
 	parsedValues = ""
 	doc = "a/data_input.txt"
