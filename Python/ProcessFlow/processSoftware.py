@@ -16,7 +16,6 @@ def findNumOfSeq(filePath):
 	return int(words[1])
 
 def writeToFile(filePath, matrix):
-	# np.savetxt(filePath, matrix);
 	fp = open(filePath, 'w')
 	for x in np.nditer(matrix, op_flags=['readwrite']):
 		x[...] = math.exp(x)

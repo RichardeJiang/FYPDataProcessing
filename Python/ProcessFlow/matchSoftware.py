@@ -53,7 +53,7 @@ if (__name__=="__main__"):
 	for x in range(0, 8):
 		topicName = "test" + str(x) + ".dat"
 		matrix = readFile(topicName).tolist()
-		dictPath = "dict.txt"
+		dictPath = "dict.txt.new"
 		updatedMatrix = []
 		count = 0
 		for wordTopicDis in matrix:
