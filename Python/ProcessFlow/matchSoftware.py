@@ -56,6 +56,7 @@ if (__name__=="__main__"):
 		dictPath = "dict.txt.new"
 		updatedMatrix = []
 		count = 0
+		matrix.pop(0)
 		for wordTopicDis in matrix:
 			word = matchWord(dictPath, count)
 			average = calculateAve(wordTopicDis)
