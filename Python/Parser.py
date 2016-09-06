@@ -15,7 +15,8 @@ class XmlParser:
 	def tagNPFilter(self, sentence):
 		tokens = nltk.word_tokenize(sentence)
 		tagged = nltk.pos_tag(tokens)
-		NPgrammar = "NP:{<DT>?<JJ|NN|NNS>*<NN|NNS>}"   # pattern "a beautiful picture"
+		NPgrammar = r"""NP:{<DT>?<JJ|NN|NNS>*<NN|NNS>}
+		ND:{<DT>?<NN|NNS><IN><DT>?<JJ|NN|NNS>*}"""   # pattern "a beautiful picture"
 		#possible development: pattern "a girl in red shirt"
 		#NPgrammar += "{<DT>?<NN|NNS><IN><DT>?<JJ|NN|NNS>*}" commented out for the fpllowing reasons
 		#Problem: "a powerful computer with strong support from university" 
@@ -25,8 +26,16 @@ class XmlParser:
 		result = ""
 		for node in resultTree:
 			if (type(node) == nltk.tree.Tree):
-				result += ''.join(item[0] for item in node.leaves()) #connect every words
-				# result += node.leaves()[len(node.leaves()) - 1][0] #use just the last NN
+				#result += ''.join(item[0] for item in node.leaves()) #connect every words
+				#result += node.leaves()[len(node.leaves()) - 1][0] #use just the last NN
+				if (node.label() == 'NP'):   # NN phrases
+					result += node.leaves()[len(node.leaves()) - 1][0]
+				else:    # IN phrases
+					if (node[0][1] == 'NN' or node[0][1] == 'NNS'):    # the first element is NN
+						result += node[0][0]
+					else:    # the first element is DT
+						result += node[1][0]
+					#result += node.leaves()[0][0]
 			else:
 				result += node[0]
 			result += " "
