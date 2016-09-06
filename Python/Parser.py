@@ -1,6 +1,7 @@
 from xml.dom.minidom import parse
 import xml.dom.minidom
 import re
+import nltk
 
 class XmlParser:
 	''' The general-purpose Xml parser '''
@@ -10,6 +11,26 @@ class XmlParser:
 		self.rootTag = rootTag
 		self.targetTags = targetTags
 		self.content = ""
+
+	def tagNPFilter(self, sentence):
+		tokens = nltk.word_tokenize(sentence)
+		tagged = nltk.pos_tag(tokens)
+		NPgrammar = "NP:{<DT>?<JJ|NN|NNS>*<NN|NNS>}"   # pattern "a beautiful picture"
+		#possible development: pattern "a girl in red shirt"
+		#NPgrammar += "{<DT>?<NN|NNS><IN><DT>?<JJ|NN|NNS>*}" commented out for the fpllowing reasons
+		#Problem: "a powerful computer with strong support from university" 
+		#1, nested; 2, 'computer' is the keywords? or 'computer with support' is the keywords?
+		cp = nltk.RegexpParser(NPgrammar)
+		resultTree = cp.parse(tagged)   #result is of type nltk.tree.Tree
+		result = ""
+		for node in resultTree:
+			if (type(node) == nltk.tree.Tree):
+				result += ''.join(item[0] for item in node.leaves()) #connect every words
+				# result += node.leaves()[len(node.leaves()) - 1][0] #use just the last NN
+			else:
+				result += node[0]
+			result += " "
+		return result
 
 	def keyWordFilter(self, article, keyword, filterTags):
 		# the idea is to use citation, reference, keyword list to find software engineering related articles
@@ -59,6 +80,7 @@ class XmlParser:
 								tagContent = re.sub(r'\"', "", tagContent)
 								# tagContent = regexBracket.sub("", tagContent)
 								# tagContent = regexQuote.sub("", tagContent)
+								tagContent = self.tagNPFilter(tagContent)
 								self.content += tagContent
 								self.content += " "
 
