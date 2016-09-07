@@ -16,9 +16,7 @@ class XmlParser:
 		tokens = nltk.word_tokenize(sentence)
 		tagged = nltk.pos_tag(tokens)
 		NPgrammar = r"""NP:{<DT>?<JJ|NN|NNS>*<NN|NNS>}
-		ND:{<DT>?<NN|NNS><IN><DT>?<JJ|NN|NNS>*}"""   # pattern "a beautiful picture"
-		#possible development: pattern "a girl in red shirt"
-		#NPgrammar += "{<DT>?<NN|NNS><IN><DT>?<JJ|NN|NNS>*}" commented out for the fpllowing reasons
+		ND:{<DT>?<NN|NNS><IN><DT>?<JJ|NN|NNS>*}"""
 		#Problem: "a powerful computer with strong support from university" 
 		#1, nested; 2, 'computer' is the keywords? or 'computer with support' is the keywords?
 		cp = nltk.RegexpParser(NPgrammar)
