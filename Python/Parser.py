@@ -2,6 +2,7 @@ from xml.dom.minidom import parse
 import xml.dom.minidom
 import re
 import nltk
+from nltk.stem.snowball import SnowballStemmer
 
 class XmlParser:
 	''' The general-purpose Xml parser '''
@@ -23,10 +24,18 @@ class XmlParser:
 		cp = nltk.RegexpParser(NPgrammar)
 		resultTree = cp.parse(tagged)   #result is of type nltk.tree.Tree
 		result = ""
+		stemmer = SnowballStemmer("english")
 		for node in resultTree:
 			if (type(node) == nltk.tree.Tree):
 				#result += ''.join(item[0] for item in node.leaves()) #connect every words
-				result += node.leaves()[len(node.leaves()) - 1][0] #use just the last NN
+				#result += stemmer.stem(node.leaves()[len(node.leaves()) - 1][0]) #use just the last NN
+
+				if node[0][1] == 'DT':
+					node.remove(node[0])  #remove the determiners
+				currNounPhrase = ''.join(stemmer.stem(item[0]) for item in node.leaves())
+				result += currNounPhrase
+				result += ' '
+				result += currNounPhrase #double noun phrases to increase the weight
 
 				### The following part assumes nested grammar can be supported ###
 				### which turns out to be false, so use the previous selction instead ###
@@ -40,7 +49,7 @@ class XmlParser:
 				### End of wasted part ###
 
 			else:
-				result += node[0]
+				result += stemmer.stem(node[0])
 			result += " "
 		return result
 
