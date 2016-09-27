@@ -34,8 +34,12 @@ class XmlParser:
 					node.remove(node[0])  #remove the determiners
 				currNounPhrase = ''.join(stemmer.stem(item[0]) for item in node.leaves())
 				result += currNounPhrase
-				result += ' '
-				result += currNounPhrase #double noun phrases to increase the weight
+
+				if len(node.leaves()) == 1:
+					pass
+				else:
+					result += ' '
+					result += currNounPhrase #double noun phrases to increase the weight
 
 				### The following part assumes nested grammar can be supported ###
 				### which turns out to be false, so use the previous selction instead ###
