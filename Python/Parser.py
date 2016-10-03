@@ -69,31 +69,45 @@ class XmlParser:
 		return False
 
 	def labelAllocator(self, article):
-		labels = ['agile software development', 'program comprehension visualization',
+		labels = ['agile software-development', 'program-comprehension program-visualization',
 			'autonomic self-managed software', 'requirements engineering',
-			'computer-supported collaborative work', 'reengineering reverse engineering',
-			'component-based software engineering', 'quality performance',
+			'computer-supported collaborative work', 'reengineering reverse-engineering',
+			'component-based software-engineering', 'quality performance',
 			'configuration management deployment', 'service-oriented architectures applications',
-			'dependendability safety reliability', 'software architecture design',
-			'distributed web-based internet-scale', 'software economics metrics',
-			'empirical software engineering', 'software evolution',
-			'end-user software engineering', 'software maintenance',
-			'engineering secure software', 'software policy ethics',
-			'feature interaction generative programming', 'software reuse',
-			'human social aspects', 'software specifications',
-			'knowledge-based software engineering', 'testing analysis',
-			'mobile embedded real-time systems', 'theory formal methods',
-			'model-driven software engineering', 'tools environments',
+			'dependendability safety reliability', 'software-architecture design',
+			'distributed web-based internet-scale', 'software-economics software-metrics',
+			'empirical software-engineering', 'software-evolution',
+			'end-user software-engineering', 'software-maintenance',
+			'engineering secure software', 'software-policy software-ethics',
+			'feature interaction generative programming', 'software-reuse',
+			'human social aspects', 'software-specifications',
+			'knowledge-based software-engineering', 'testing analysis',
+			'mobile embedded real-time systems', 'theory formal-methods',
+			'model-driven software-engineering', 'tools environments',
 			'patterns frameworks', 'validation verification',
 			'processes workflow']
 		labelCheckList = [0] * len(labels)
-		targetTags = ['par', 'title', 'subtitle', 'ft_body', 'concept_desc']
+		returnedLabels = []
+		targetTags = ['par', 'title', 'subtitle', 'ft_body', 'concept_desc', 'kw']
+		contentString = ''
 		for tag in targetTags:
 			tagContents = article.getElementsByTagName(tag)
 			for tagContent in tagContents:
-				tagContent.childNodes[0].data.lower()
+				contentString += tagContent.childNodes[0].data.lower()
+				contentString += ' '
+		for i in range(0, len(labels)):
+			label = labels[i]
+			tokens = label.split(' ')
+			for token in tokens:
+				origin = token
+				spaceDuplicate = token.replace('-', ' ')
+				if origin in contentString or spaceDuplicate in contentString:
+					labelCheckList[i] += 1
 
-		return
+			if labelCheckList[i] >= len(tokens) - 1: # Q: how to set this threshold
+				returnedLabels.append(labels[i])
+
+		return ' '.join(returnedLabels)
 
 	def parse(self):
 
@@ -122,7 +136,7 @@ class XmlParser:
 					pass
 				else:
 					# add in label filters to allocate the labels
-					# tags = self.labelAllocator(article)
+					tags = self.labelAllocator(article)
 					for tag in self.targetTags:
 						tagContents = article.getElementsByTagName(tag)
 						#print tagContent
@@ -167,7 +181,8 @@ class XmlParser:
 
 					if self.content:
 						self.content = self.content.strip()
-						result += (str(count) + " en " + self.content + "\n")
+						#result += (str(count) + " en " + self.content + "\n")
+						result += (str(count) + "\t" + tags + "\t" + self.content + "\n")
 						self.content = ""
 						count += 1
 
