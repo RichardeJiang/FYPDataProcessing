@@ -90,7 +90,9 @@ class XmlParser:
 		targetTags = ['par', 'title', 'subtitle', 'ft_body', 'concept_desc']
 		for tag in targetTags:
 			tagContents = article.getElementsByTagName(tag)
-			
+			for tagContent in tagContents:
+				tagContent.childNodes[0].data.lower()
+
 		return
 
 	def parse(self):
