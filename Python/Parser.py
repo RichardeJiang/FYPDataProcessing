@@ -68,6 +68,31 @@ class XmlParser:
 		
 		return False
 
+	def labelAllocator(self, article):
+		labels = ['agile software development', 'program comprehension visualization',
+			'autonomic self-managed software', 'requirements engineering',
+			'computer-supported collaborative work', 'reengineering reverse engineering',
+			'component-based software engineering', 'quality performance',
+			'configuration management deployment', 'service-oriented architectures applications',
+			'dependendability safety reliability', 'software architecture design',
+			'distributed web-based internet-scale', 'software economics metrics',
+			'empirical software engineering', 'software evolution',
+			'end-user software engineering', 'software maintenance',
+			'engineering secure software', 'software policy ethics',
+			'feature interaction generative programming', 'software reuse',
+			'human social aspects', 'software specifications',
+			'knowledge-based software engineering', 'testing analysis',
+			'mobile embedded real-time systems', 'theory formal methods',
+			'model-driven software engineering', 'tools environments',
+			'patterns frameworks', 'validation verification',
+			'processes workflow']
+		labelCheckList = [0] * len(labels)
+		targetTags = ['par', 'title', 'subtitle', 'ft_body', 'concept_desc']
+		for tag in targetTags:
+			tagContents = article.getElementsByTagName(tag)
+			
+		return
+
 	def parse(self):
 
 		count = 1
@@ -94,7 +119,8 @@ class XmlParser:
 				if not self.keyWordFilter(article, keyword, filterList):
 					pass
 				else:
-
+					# add in label filters to allocate the labels
+					# tags = self.labelAllocator(article)
 					for tag in self.targetTags:
 						tagContents = article.getElementsByTagName(tag)
 						#print tagContent
