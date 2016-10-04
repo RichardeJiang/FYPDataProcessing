@@ -104,10 +104,13 @@ class XmlParser:
 				if origin in contentString or spaceDuplicate in contentString:
 					labelCheckList[i] += 1
 
-			if labelCheckList[i] >= len(tokens) - 1: # Q: how to set this threshold
-				returnedLabels.append(labels[i])
+			if labelCheckList[i] >= len(tokens): # Q: how to set this threshold
+				returnedLabels.append(','.join(tokens))
 
-		return ' '.join(returnedLabels)
+		if len(returnedLabels) > 0:
+			return ' '.join(returnedLabels)
+		else:
+			return 'none'
 
 	def parse(self):
 
