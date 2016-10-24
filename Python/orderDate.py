@@ -7,7 +7,7 @@ def sortDict(inputList):
 def writeToNewDict(filePath, matrix):
 	fp = open(filePath, 'w')
 	for line in matrix:
-		fp.write("%s" % ','.join(line))
+		fp.write("%s" % ' '.join(line))
 
 def readDict(filePath):
 	fp = open(filePath, 'r')

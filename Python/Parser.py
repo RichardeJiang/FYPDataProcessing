@@ -57,14 +57,17 @@ class XmlParser:
 			result += " "
 		return result
 
-	def keyWordFilter(self, article, keyword, filterTags):
+	def keyWordFilter(self, article, keywords, filterTags):
 		# the idea is to use citation, reference, keyword list to find software engineering related articles
 		for filterTag in filterTags:
 			tagContents = article.getElementsByTagName(filterTag)
 
 			for tagContent in tagContents:
-				if (keyword in tagContent.childNodes[0].data.lower()):
-					return True
+				for keyword in keywords:
+					keywordDash = '-'.join(keyword.split(' '))
+					if (keyword in tagContent.childNodes[0].data.lower()) 
+						or (keywordDash in tagContent.childNodes[0].data.lower()):
+						return True
 		
 		return False
 
@@ -117,7 +120,7 @@ class XmlParser:
 		count = 1
 		result = ""
 
-		keyword = "software engineering"
+		keywords = ["software engineering", "software and its engineering"]
 		filterList = ["kw", "ref_text", "cited_by_text", "concept_desc", "subtitle"]
 
 		for fileName in self.fileList:
@@ -135,7 +138,7 @@ class XmlParser:
 
 			for article in articles:
 
-				if not self.keyWordFilter(article, keyword, filterList):
+				if not self.keyWordFilter(article, keywords, filterList):
 					pass
 				else:
 					# add in label filters to allocate the labels
