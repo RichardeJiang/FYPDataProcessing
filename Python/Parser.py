@@ -3,6 +3,15 @@ import xml.dom.minidom
 import re
 import nltk
 from nltk.stem.snowball import SnowballStemmer
+from itertools import takewhile, tee, izip, chain
+
+import networkx
+import string
+import sys
+
+#added for solving the headache ascii encode/decode problem
+reload(sys)  
+sys.setdefaultencoding('utf8')
 
 class XmlParser:
 	''' The general-purpose Xml parser '''
@@ -12,6 +21,62 @@ class XmlParser:
 		self.rootTag = rootTag
 		self.targetTags = targetTags
 		self.content = ""
+
+	def extract_candidate_words(self, text, good_tags=set(['JJ','JJR','JJS','NN','NNP','NNS','NNPS'])):
+		stop_words = set(nltk.corpus.stopwords.words('english'))
+		tagged_words = nltk.pos_tag(nltk.word_tokenize(text))
+		candidates = [word.lower() for word, tag in tagged_words
+			if tag in good_tags and word.lower() not in stop_words and len(word) > 1]
+		return candidates
+
+	def getKeyphraseByTextRank(self, text, n_keywords=0.05, n_windowSize=2, n_cooccurSize=3):
+		words = [word.lower()
+			for word in nltk.word_tokenize(text)
+			if len(word) > 1]
+		# print words
+		candidates = self.extract_candidate_words(text)
+		# print candidates
+		graph = networkx.Graph()
+		graph.add_nodes_from(set(candidates))
+		
+		for i in range(0, n_windowSize-1):
+			def pairwise(iterable):
+				a, b = tee(iterable)
+				next(b, None)
+				for j in range(0, i):
+					next(b, None)
+				return izip(a, b)
+			for w1, w2 in pairwise(candidates):
+				if w2:
+					graph.add_edge(*sorted([w1, w2]))
+
+		ranks = networkx.pagerank(graph)
+		if 0 < n_keywords < 1:
+			n_keywords = int(round(len(candidates) * n_keywords))
+		word_ranks = {word_rank[0]: word_rank[1]
+			for word_rank in sorted(ranks.iteritems(), key=lambda x: x[1], reverse=True)[:n_keywords]}
+		keywords = set(word_ranks.keys())
+
+		keyphrases = {}
+		j = 0
+		for i, word in enumerate(words):
+			if i<j:
+				continue
+			if word in keywords:
+				kp_words = list(takewhile(lambda x: x in keywords, words[i:i+n_cooccurSize]))
+				avg_pagerank = sum(word_ranks[w] for w in kp_words) / float(len(kp_words))
+				keyphrases[' '.join(kp_words)] = avg_pagerank
+
+				j = i + len(kp_words)
+		results = [''.join(self.removeDuplicates(ele[0].split())) 
+			for ele in sorted(keyphrases.iteritems(), key=lambda x: x[1], reverse=True)]
+		results = self.removeDuplicates(results)
+		return ' '.join(results)
+
+	def removeDuplicates(self, seq):
+		seen = set()
+		seen_add = seen.add
+		return [x for x in seq if not (x in seen or seen_add(x))]
 
 	def tagNPFilter(self, sentence):
 		tokens = nltk.word_tokenize(sentence)
@@ -65,8 +130,8 @@ class XmlParser:
 			for tagContent in tagContents:
 				for keyword in keywords:
 					keywordDash = '-'.join(keyword.split(' '))
-					if (keyword in tagContent.childNodes[0].data.lower()) 
-						or (keywordDash in tagContent.childNodes[0].data.lower()):
+					if ((keyword in tagContent.childNodes[0].data.lower()) 
+						or (keywordDash in tagContent.childNodes[0].data.lower())):
 						return True
 		
 		return False
@@ -142,18 +207,23 @@ class XmlParser:
 					pass
 				else:
 					# add in label filters to allocate the labels
-					tags = self.labelAllocator(article)
+					# tags = self.labelAllocator(article)
 					for tag in self.targetTags:
 						tagContents = article.getElementsByTagName(tag)
-						#print tagContent
 
 						if (tag != "article_publication_date"):
 							for tagContent in tagContents:
 								tagContent = re.sub(r'<.*?>', "", tagContent.childNodes[0].data)
 								tagContent = re.sub(r'\"', "", tagContent)
+								tagContent = str(tagContent.encode('utf-8')).translate(None, string.punctuation)
+								#tagContent = str(tagContent).translate(None, string.punctuation)
+								tagContent = ''.join([i for i in tagContent if not i.isdigit()])
 								# tagContent = regexBracket.sub("", tagContent)
 								# tagContent = regexQuote.sub("", tagContent)
-								tagContent = self.tagNPFilter(tagContent)
+								# tagContent = self.tagNPFilter(tagContent)
+
+								### this is the part of getting keyphrases ###
+								tagContent = self.getKeyphraseByTextRank(tagContent)
 								self.content += tagContent
 								self.content += " "
 
@@ -161,6 +231,7 @@ class XmlParser:
 							for time in tagContents:
 								timeList = time.childNodes[0].data.split("-")
 								timing = timeList[len(timeList) - 1]
+								print timing
 								self.content = timing + " " + self.content
 					# titles = article.getElementsByTagName("title")
 					# abstracts = article.getElementsByTagName("par")
@@ -186,9 +257,11 @@ class XmlParser:
 						continue
 
 					if self.content:
-						self.content = self.content.strip()
-						#result += (str(count) + " en " + self.content + "\n")
-						result += (str(count) + "\t" + tags + "\t" + self.content + "\n")
+						# temp = [str(self.content.strip().encode('utf-8'))]
+						# print temp
+						# self.content = self.getKeyphraseByTextRank(temp)
+						result += (str(count) + " en " + self.content + "\n")
+						# result += (str(count) + "\t" + tags + "\t" + self.content + "\n")
 						self.content = ""
 						count += 1
 
