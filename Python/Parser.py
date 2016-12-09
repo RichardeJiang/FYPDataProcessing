@@ -29,7 +29,7 @@ class XmlParser:
 			if tag in good_tags and word.lower() not in stop_words and len(word) > 1]
 		return candidates
 
-	def getKeyphraseByTextRank(self, text, n_keywords=0.05, n_windowSize=2, n_cooccurSize=3):
+	def getKeyphraseByTextRank(self, text, n_keywords=0.015, n_windowSize=2, n_cooccurSize=2):
 		words = [word.lower()
 			for word in nltk.word_tokenize(text)
 			if len(word) > 1]
@@ -68,9 +68,24 @@ class XmlParser:
 				keyphrases[' '.join(kp_words)] = avg_pagerank
 
 				j = i + len(kp_words)
-		results = [''.join(self.removeDuplicates(ele[0].split())) 
-			for ele in sorted(keyphrases.iteritems(), key=lambda x: x[1], reverse=True)]
+
+		stemmer = SnowballStemmer("english")
+		# results = [''.join(self.removeDuplicates(ele[0].split())) 
+		# 	for ele in sorted(keyphrases.iteritems(), key=lambda x: x[1], reverse=True)]
+		results = [ele[0] for ele in sorted(keyphrases.iteritems(), key=lambda x: x[1], reverse=True)]
+		targetTagSet = ['NN', 'NNS', 'NNP', 'NNPS']
+		# for index in range(0, len(results)):
+		# 	result = results[index]
+		for result in results:
+			tempSet = self.removeDuplicates(result.split())
+			if nltk.pos_tag(nltk.word_tokenize(tempSet[-1]))[0][1] not in targetTagSet:
+				results.remove(result)
+			else:
+				newPhrase = ''.join(stemmer.stem(wordEle) for wordEle in tempSet)
+				results[results.index(result)] = newPhrase
 		results = self.removeDuplicates(results)
+		if (len(results) > 200):
+			results = results[:len(results) * 0.25]
 		return ' '.join(results)
 
 	def removeDuplicates(self, seq):
@@ -231,7 +246,6 @@ class XmlParser:
 							for time in tagContents:
 								timeList = time.childNodes[0].data.split("-")
 								timing = timeList[len(timeList) - 1]
-								print timing
 								self.content = timing + " " + self.content
 					# titles = article.getElementsByTagName("title")
 					# abstracts = article.getElementsByTagName("par")
