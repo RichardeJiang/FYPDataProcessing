@@ -11,9 +11,14 @@ def readFile(filePath):
 		matrix.append(lineContent)
 	return matrix
 
-def plotMatrix(matrix, index):
+def plotMatrix(matrix, index, startingYear):
 	size = len(matrix[0]) - 2
-	X = range(0, size)
+	# X = range(0, size)
+	X = range(startingYear, startingYear + size)
+	plt.xlabel('year')
+	plt.ylabel('frequency')
+	plt.xlim(startingYear, startingYear + size + 6)
+	plt.title('Topic No. ' + str(index))
 	for line in matrix:
 		temp = line[2 : size+2]
 		Y = [float(i) for i in temp]
@@ -27,10 +32,11 @@ def plotMatrix(matrix, index):
 	return
 
 if (__name__=="__main__"):
+	startingYear = 1958
 
-	for index in range(0,8):
+	for index in range(0,20):
 		path = 'test' + str(index) + 'top20words.dat'
 		matrix = readFile(path)
-		plotMatrix(matrix, index)
+		plotMatrix(matrix, index, startingYear)
 
 	pass
