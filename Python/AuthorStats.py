@@ -6,6 +6,7 @@ import nltk
 from nltk.stem.snowball import SnowballStemmer
 from itertools import takewhile, tee, izip, chain
 import os
+import math
 
 import networkx
 import string
@@ -14,6 +15,13 @@ import sys
 #added for solving the headache ascii encode/decode problem
 reload(sys)  
 sys.setdefaultencoding('utf8')
+
+def writeListToFile(listFile, fileName):
+	theFile = open(fileName, 'w')
+	for item in listFile:
+		theFile.write("%s\n" % item)
+	theFile.close()
+	return
 
 def XmlParsing(targetFile, targetTag):
 	try:
@@ -33,7 +41,7 @@ def extract_candidate_words(text, good_tags=set(['JJ','JJR','JJS','NN','NNP','NN
 		if tag in good_tags and word.lower() not in stop_words and len(word) > 1]
 	return candidates
 
-def getKeyphraseByTextRank(text, n_keywords=0.8, n_windowSize=2, n_cooccurSize=2):
+def getKeyphraseByTextRank(text, n_keywords=0.1, n_windowSize=2, n_cooccurSize=2):
 	words = [word.lower()
 		for word in nltk.word_tokenize(text)
 		if len(word) > 1]
@@ -120,6 +128,36 @@ def removeDuplicates(seq):
 	seen_add = seen.add
 	return [x for x in seq if not (x in seen or seen_add(x))]
 
+def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
+	for count in range(0, 500):
+		norm = 0.0
+		for author in authorPhraseMap:
+			currPhraseList = authorPhraseMap[author]
+			authorScore = 0
+			for phrase in currPhraseList:
+				authorScore += phraseScoreList[phrase]
+
+			norm += (authorScore ** 2)
+			authorScoreList[author] = authorScore
+		norm = math.sqrt(norm)
+		for author in authorScoreList:
+			authorScoreList[author] = authorScoreList[author] / norm
+
+		norm = 0
+		for phrase in phraseAuthorMap:
+			currAuthorList = phraseAuthorMap[phrase]
+			phraseScore = 0
+			for author in currAuthorList:
+				phraseScore += authorScoreList[author]
+
+			norm += (phraseScore ** 2)
+			phraseScoreList[phrase] = phraseScore
+		norm = math.sqrt(norm)
+		for phrase in phraseScoreList:
+			phraseScoreList[phrase] = phraseScoreList[phrase] / norm
+
+	return phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap
+
 if (__name__ == '__main__'):
 	fileList = os.listdir('.')
 	targetList = []
@@ -159,8 +197,9 @@ if (__name__ == '__main__'):
 	for name in sorted_scoreList:
 		print authorIdMap[name[0]]
 
-	authorPhraseMap = {}
+	authorPhraseMap = {author:[] for author in sorted_scoreDict}
 	phraseScoreList = {}
+	phraseAuthorMap = {}
 	# every doc, get keyphrases, with initial score of TextRankScore x sum(authorScore)
 	# authorScore update according to normalized sum of keyphrases score ... 1
 	# phraseScore update according to normalized sum of author score ...2
@@ -173,22 +212,56 @@ if (__name__ == '__main__'):
 			currAuthorMap = [item.childNodes[0].data for item in authors]
 			if (len(set(currAuthorMap) & set(authorMap)) > 0):
 				abstract = article.getElementsByTagName("par")
-				sumOfCurrAuthorScore = 0
-				for currAuthor in currAuthorMap:
-					sumOfCurrAuthorScore += sorted_scoreDict[currAuthor]
+				
 				if len(abstract) > 0:
 					abstract = abstract.item(0).childNodes[0].data
 					abstract = re.sub(r'<.*?>', "", abstract)
 					abstract = re.sub(r'\"', "", abstract)
-
 					abstract = str(abstract.encode('utf-8')).translate(None, string.punctuation)
 					abstract = ''.join([i for i in abstract if not i.isdigit()])
+
 					currPhraseScoreMap = getKeyphraseByTextRank(abstract)
+					currPhraseSet = set([currPhrase for currPhrase in currPhraseScoreMap])
+
+					sumOfCurrAuthorScore = 0
+					VIPAuthorSet = set(currAuthorMap) & set(authorMap)
+					for currAuthor in list(VIPAuthorSet):
+						sumOfCurrAuthorScore += sorted_scoreDict[currAuthor]
+						authorPhraseMap[currAuthor] = list(set(authorPhraseMap[currAuthor]) | currPhraseSet)
+
 					for currPhrase in currPhraseScoreMap:
 						if not phraseScoreList.has_key(currPhrase):
 							phraseScoreList[currPhrase] = currPhraseScoreMap[currPhrase] * sumOfCurrAuthorScore
 						else:
 							phraseScoreList[currPhrase] += currPhraseScoreMap[currPhrase] * sumOfCurrAuthorScore
 
-					
+						if not phraseAuthorMap.has_key(currPhrase):
+							phraseAuthorMap[currPhrase] = list(VIPAuthorSet)
+						else:
+							temp = list(set(phraseAuthorMap[currPhrase]) | VIPAuthorSet)
+							phraseAuthorMap[currPhrase] = temp
+
+	phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap =
+		HITS(phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap)
+
+	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)[:200]
+	sorted_authorList = sorted(sorted_scoreDict.items(), key = operator.itemgetter(1), reverse = True)
+
+	writeListToFile(sorted_phraseList, 'b/sorted_phraseList.txt')
+
+	authorNamePhraseList = []
+	for authorScore in sorted_authorList:
+		author = authorScore[0]
+		if len(authorPhraseMap[author]) > 20:
+			authorNamePhraseList.append((authorIdMap[author], authorPhraseMap[author][:20]))
+		else:
+			authorNamePhraseList.append((authorIdMap[author], authorPhraseMap[author]))
+	# authorNamePhraseMap = {}
+	# for author in authorPhraseMap:
+	# 	if len(authorPhraseMap[author]) > 20:
+	# 		authorNamePhraseMap[authorIdMap[author]] = authorPhraseMap[author][:20]
+	# 	else:
+	# 		authorNamePhraseMap[authorIdMap[author]] = authorPhraseMap[author]
+	writeListToFile(authorNamePhraseList, 'b/authorNamePhraseList.txt')
+
 	pass
