@@ -19,8 +19,18 @@ sys.setdefaultencoding('utf8')
 def writeListToFile(listFile, fileName):
 	theFile = open(fileName, 'w')
 	for item in listFile:
-		theFile.write("%s\n" % item)
+		theFile.write("%s: " % str(item[0]))
+		for inner in item[1]:
+			theFile.write("%s " % str(inner))
+		theFile.write("\n")
 	theFile.close()
+	return
+
+def writeFreqToFile(listFile, fileName):
+	theFile = open(fileName, "w")
+	for item in listFile:
+		theFile.write("%s: " % str(item[0]))
+		theFile.write("%s\n" % str(item[1]))
 	return
 
 def XmlParsing(targetFile, targetTag):
@@ -29,10 +39,13 @@ def XmlParsing(targetFile, targetTag):
 	except xml.parsers.expat.ExpatError, e:
 		print "The file causing the error is: ", fileName
 		print "The detailed error is: %s" %e
-	collection = DOMTree.documentElement
+	else:
+		collection = DOMTree.documentElement
 
-	resultList = collection.getElementsByTagName(targetTag)
-	return resultList
+		resultList = collection.getElementsByTagName(targetTag)
+		return resultList
+
+	return "ERROR"
 
 def extract_candidate_words(text, good_tags=set(['JJ','JJR','JJS','NN','NNP','NNS','NNPS'])):
 	stop_words = set(nltk.corpus.stopwords.words('english'))
@@ -41,7 +54,7 @@ def extract_candidate_words(text, good_tags=set(['JJ','JJR','JJS','NN','NNP','NN
 		if tag in good_tags and word.lower() not in stop_words and len(word) > 1]
 	return candidates
 
-def getKeyphraseByTextRank(text, n_keywords=0.1, n_windowSize=2, n_cooccurSize=2):
+def getKeyphraseByTextRank(text, n_keywords=0.3, n_windowSize=2, n_cooccurSize=2):
 	words = [word.lower()
 		for word in nltk.word_tokenize(text)
 		if len(word) > 1]
@@ -129,7 +142,7 @@ def removeDuplicates(seq):
 	return [x for x in seq if not (x in seen or seen_add(x))]
 
 def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
-	for count in range(0, 500):
+	for count in range(0, 10000):
 		norm = 0.0
 		for author in authorPhraseMap:
 			currPhraseList = authorPhraseMap[author]
@@ -169,26 +182,37 @@ if (__name__ == '__main__'):
 	authorIdMap = {}
 	for target in targetList:
 		authorList = XmlParsing(target, "au")
+		if authorList == "ERROR":
+			continue
 
 		for author in authorList:
-			firstName = author.getElementsByTagName("first_name").item(0).childNodes[0].data
-			lastName = author.getElementsByTagName("last_name").item(0).childNodes[0].data
-			id = author.getElementsByTagName("author_profile_id").item(0).childNodes[0].data
+			try:
+				firstName = author.getElementsByTagName("first_name").item(0).childNodes[0].data
+				lastName = author.getElementsByTagName("last_name").item(0).childNodes[0].data
+				id = author.getElementsByTagName("author_profile_id").item(0).childNodes[0].data
 			#print "first name is: " + str(firstName) + " last name is: " + str(lastName) + " " + id
-			fullName = firstName.split(".")[0] + " " + lastName
-			if not scoreList.has_key(id):
-				scoreList[id] = 1
+			except IndexError, e:
+				print "Xml file author tag parsing error: %s" %e
+				#continue
+			except AttributeError, e1:
+				print "No selected attribute detected: %s" %e1
+				#continue
 			else:
-				scoreList[id] += 1
+				fullName = firstName.split(".")[0] + " " + lastName
+				#print fullName
+				if not scoreList.has_key(id):
+					scoreList[id] = 1
+				else:
+					scoreList[id] += 1
 
-			if not authorIdMap.has_key(id):
-				authorIdMap[id] = fullName
-			else:
-				if len(authorIdMap[id]) < len(fullName):
+				if not authorIdMap.has_key(id):
 					authorIdMap[id] = fullName
+				else:
+					if len(authorIdMap[id]) < len(fullName):
+						authorIdMap[id] = fullName
 
-	print 'Total number of authors is: ' + len(authorIdMap)
-	sorted_scoreList = sorted(scoreList.items(), key = operator.itemgetter(1), reverse = True)[:200]
+	print 'Total number of authors is: ' + str(len(authorIdMap))
+	sorted_scoreList = sorted(scoreList.items(), key = operator.itemgetter(1), reverse = True)[:300]
 	sorted_scoreDict = {}
 	for item in sorted_scoreList:
 		sorted_scoreDict[item[0]] = item[1]
@@ -207,6 +231,9 @@ if (__name__ == '__main__'):
 
 	for target in targetList:
 		articleList = XmlParsing(target, "article_rec")
+		if articleList == "ERROR":
+			continue
+
 		for article in articleList:
 			authors = article.getElementsByTagName("author_profile_id")
 			currAuthorMap = [item.childNodes[0].data for item in authors]
@@ -241,21 +268,22 @@ if (__name__ == '__main__'):
 							temp = list(set(phraseAuthorMap[currPhrase]) | VIPAuthorSet)
 							phraseAuthorMap[currPhrase] = temp
 
-	phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap =
-		HITS(phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap)
+	phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap = HITS(phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap)
 
-	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)[:200]
+	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)[:300]
 	sorted_authorList = sorted(sorted_scoreDict.items(), key = operator.itemgetter(1), reverse = True)
 
-	writeListToFile(sorted_phraseList, 'b/sorted_phraseList.txt')
+	writeFreqToFile(sorted_phraseList, 'b/sorted_phraseList.txt')
 
 	authorNamePhraseList = []
 	for authorScore in sorted_authorList:
 		author = authorScore[0]
+		authorName = str(authorIdMap[author].encode('utf-8')).translate(None, string.punctuation)
+		authorName = ''.join([i for i in authorName if not i.isdigit()])
 		if len(authorPhraseMap[author]) > 20:
-			authorNamePhraseList.append((authorIdMap[author], authorPhraseMap[author][:20]))
+			authorNamePhraseList.append((authorName, authorPhraseMap[author][:20]))
 		else:
-			authorNamePhraseList.append((authorIdMap[author], authorPhraseMap[author]))
+			authorNamePhraseList.append((authorName, authorPhraseMap[author]))
 	# authorNamePhraseMap = {}
 	# for author in authorPhraseMap:
 	# 	if len(authorPhraseMap[author]) > 20:
