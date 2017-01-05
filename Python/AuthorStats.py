@@ -180,10 +180,19 @@ if (__name__ == '__main__'):
 
 	scoreList = {}
 	authorIdMap = {}
+	count = 0
+	flag9000_1 = False
+	flag9000_2 = False
 	for target in targetList:
 		authorList = XmlParsing(target, "au")
 		if authorList == "ERROR":
 			continue
+
+		# This part is to check whether all files have been iterated through
+		count += 1
+		if count > 9000:
+			print "9000 REACHED!!!!!!!!!!!!!!!!!!!!!!!!!!"
+			flag9000_1 = True
 
 		for author in authorList:
 			try:
@@ -229,10 +238,17 @@ if (__name__ == '__main__'):
 	# phraseScore update according to normalized sum of author score ...2
 	# iterate through 1 and 2
 
+	count = 0
 	for target in targetList:
 		articleList = XmlParsing(target, "article_rec")
 		if articleList == "ERROR":
 			continue
+
+		# This part is to check whether all files have been iterated through
+		count += 1
+		if count > 9000:
+			print "9000 REACHED!!!!!!!!!!!!!!!!!!"
+			flag9000_2 = True
 
 		for article in articleList:
 			authors = article.getElementsByTagName("author_profile_id")
@@ -291,5 +307,11 @@ if (__name__ == '__main__'):
 	# 	else:
 	# 		authorNamePhraseMap[authorIdMap[author]] = authorPhraseMap[author]
 	writeListToFile(authorNamePhraseList, 'b/authorNamePhraseList.txt')
+
+	if flag9000_1:
+		print "1st 9000 has been reached"
+
+	if flag9000_2:
+		print "2nd 9000 has been reached"
 
 	pass
