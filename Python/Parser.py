@@ -29,7 +29,7 @@ class XmlParser:
 			if tag in good_tags and word.lower() not in stop_words and len(word) > 1]
 		return candidates
 
-	def getKeyphraseByTextRank(self, text, n_keywords=0.8, n_windowSize=2, n_cooccurSize=2):
+	def getKeyphraseByTextRank(self, text, n_keywords=0.2, n_windowSize=2, n_cooccurSize=2):
 		words = [word.lower()
 			for word in nltk.word_tokenize(text)
 			if len(word) > 1]
