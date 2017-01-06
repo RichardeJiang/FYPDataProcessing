@@ -7,6 +7,7 @@ from nltk.stem.snowball import SnowballStemmer
 from itertools import takewhile, tee, izip, chain
 import os
 import math
+import numpy as np
 
 import networkx
 import string
@@ -183,6 +184,7 @@ if (__name__ == '__main__'):
 	count = 0
 	flag9000_1 = False
 	flag9000_2 = False
+
 	for target in targetList:
 		authorList = XmlParsing(target, "au")
 		if authorList == "ERROR":
@@ -191,7 +193,6 @@ if (__name__ == '__main__'):
 		# This part is to check whether all files have been iterated through
 		count += 1
 		if count > 9000:
-			print "9000 REACHED!!!!!!!!!!!!!!!!!!!!!!!!!!"
 			flag9000_1 = True
 
 		for author in authorList:
@@ -225,18 +226,33 @@ if (__name__ == '__main__'):
 	sorted_scoreDict = {}
 	for item in sorted_scoreList:
 		sorted_scoreDict[item[0]] = item[1]
-	authorMap = [item[0] for item in sorted_scoreList]
-	print 'Top 200 authors:'
-	for name in sorted_scoreList:
-		print authorIdMap[name[0]]
+	
+	# Fundamental logic of HITS Algorithm
+	# every doc, get keyphrases, with initial score of TextRankScore x sum(authorScore)
+	# authorScore update according to normalized sum of keyphrases score ... 1
+	# phraseScore update according to normalized sum of author score ... 2
+	# iterate through 1 and 2
+
+	# This part is to store the author score list computed above into an external file
+	np_sorted_author_scoreList = np.asarray(sorted_scoreList)
+	np_author_id_list = np.asarray([(k, v) for k, v in authorIdMap.items()])
+	np.savetxt('sorted_author_scoreList.txt', np_sorted_author_scoreList)
+	np.savetxt('author_id_map.txt', np_author_id_list)
+	print "Author score info saved."
+	# End of the storing to file logic
+
+	# This part is to read the stored file to restore the authorScoreList and AuthorIdMap
+	tempAuthorScoreList = np.loadtxt('sorted_author_scoreList.txt')
+	tempAuthorIdList = np.loadtxt('author_id_map.txt')
+	sorted_scoreDict = {k:float(v) for [k,v] in tempAuthorScoreList}
+	authorIdMap = {k:v for [k, v] in tempAuthorIdList}
+	# End of txt file reading logic
+
+	authorMap = [item for item in sorted_scoreDict]
 
 	authorPhraseMap = {author:[] for author in sorted_scoreDict}
 	phraseScoreList = {}
 	phraseAuthorMap = {}
-	# every doc, get keyphrases, with initial score of TextRankScore x sum(authorScore)
-	# authorScore update according to normalized sum of keyphrases score ... 1
-	# phraseScore update according to normalized sum of author score ...2
-	# iterate through 1 and 2
 
 	count = 0
 	for target in targetList:
@@ -247,7 +263,6 @@ if (__name__ == '__main__'):
 		# This part is to check whether all files have been iterated through
 		count += 1
 		if count > 9000:
-			print "9000 REACHED!!!!!!!!!!!!!!!!!!"
 			flag9000_2 = True
 
 		for article in articleList:
