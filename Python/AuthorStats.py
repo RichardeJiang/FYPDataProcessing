@@ -55,7 +55,7 @@ def extract_candidate_words(text, good_tags=set(['JJ','JJR','JJS','NN','NNP','NN
 		if tag in good_tags and word.lower() not in stop_words and len(word) > 1]
 	return candidates
 
-def getKeyphraseByTextRank(text, n_keywords=0.3, n_windowSize=2, n_cooccurSize=2):
+def getKeyphraseByTextRank(text, n_keywords=0.04, n_windowSize=2, n_cooccurSize=2):
 	words = [word.lower()
 		for word in nltk.word_tokenize(text)
 		if len(word) > 1]
@@ -157,7 +157,7 @@ def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
 		for author in authorScoreList:
 			authorScoreList[author] = authorScoreList[author] / norm
 
-		norm = 0
+		norm = 0.0
 		for phrase in phraseAuthorMap:
 			currAuthorList = phraseAuthorMap[phrase]
 			phraseScore = 0
@@ -234,18 +234,18 @@ if (__name__ == '__main__'):
 	# iterate through 1 and 2
 
 	# This part is to store the author score list computed above into an external file
-	np_sorted_author_scoreList = np.asarray(sorted_scoreList)
-	np_author_id_list = np.asarray([(k, v) for k, v in authorIdMap.items()])
-	np.savetxt('sorted_author_scoreList.txt', np_sorted_author_scoreList)
-	np.savetxt('author_id_map.txt', np_author_id_list)
-	print "Author score info saved."
+	# np_sorted_author_scoreList = np.asarray(sorted_scoreList)
+	# np_author_id_list = np.asarray([(k, v) for k, v in authorIdMap.items()])
+	# np.savetxt('sorted_author_scoreList.txt', np_sorted_author_scoreList)
+	# np.savetxt('author_id_map.txt', np_author_id_list)
+	# print "Author score info saved."
 	# End of the storing to file logic
 
 	# This part is to read the stored file to restore the authorScoreList and AuthorIdMap
-	tempAuthorScoreList = np.loadtxt('sorted_author_scoreList.txt')
-	tempAuthorIdList = np.loadtxt('author_id_map.txt')
-	sorted_scoreDict = {k:float(v) for [k,v] in tempAuthorScoreList}
-	authorIdMap = {k:v for [k, v] in tempAuthorIdList}
+	# tempAuthorScoreList = np.loadtxt('sorted_author_scoreList.txt')
+	# tempAuthorIdList = np.loadtxt('author_id_map.txt')
+	# sorted_scoreDict = {k:float(v) for [k,v] in tempAuthorScoreList}
+	# authorIdMap = {k:v for [k, v] in tempAuthorIdList}
 	# End of txt file reading logic
 
 	authorMap = [item for item in sorted_scoreDict]
@@ -269,7 +269,7 @@ if (__name__ == '__main__'):
 			authors = article.getElementsByTagName("author_profile_id")
 			currAuthorMap = [item.childNodes[0].data for item in authors]
 			if (len(set(currAuthorMap) & set(authorMap)) > 0):
-				abstract = article.getElementsByTagName("par")
+				abstract = article.getElementsByTagName("ft_body")
 				
 				if len(abstract) > 0:
 					abstract = abstract.item(0).childNodes[0].data
@@ -313,9 +313,10 @@ if (__name__ == '__main__'):
 		author = authorScore[0]
 		authorName = str(authorIdMap[author].encode('utf-8')).translate(None, string.punctuation)
 		authorName = ''.join([i for i in authorName if not i.isdigit()])
-		if len(authorPhraseMap[author]) > 20:
-			sortedCurrAuthorPhraseList = authorPhraseMap[author].sort(key=lambda x: sorted_phraseListNoScore.index(x))
-			authorNamePhraseList.append((authorName, sortedCurrAuthorPhraseList[:20]))
+		if len(authorPhraseMap[author]) > 25:
+			# Important note here: list a.sort(key = lambda xxxx): this statement returns no value!
+			authorPhraseMap[author].sort(key=lambda x: sorted_phraseListNoScore.index(x))
+			authorNamePhraseList.append((authorName, authorPhraseMap[author][:25]))
 		else:
 			authorNamePhraseList.append((authorName, authorPhraseMap[author]))
 	# authorNamePhraseMap = {}
