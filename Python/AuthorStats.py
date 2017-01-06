@@ -301,10 +301,12 @@ if (__name__ == '__main__'):
 
 	phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap = HITS(phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap)
 
-	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)[:300]
+	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)
 	sorted_authorList = sorted(sorted_scoreDict.items(), key = operator.itemgetter(1), reverse = True)
 
-	writeFreqToFile(sorted_phraseList, 'b/sorted_phraseList.txt')
+	sorted_phraseListNoScore = [item[0] for item in sorted_phraseList]
+
+	writeFreqToFile(sorted_phraseList[:300], 'b/sorted_phraseList.txt')
 
 	authorNamePhraseList = []
 	for authorScore in sorted_authorList:
@@ -312,7 +314,8 @@ if (__name__ == '__main__'):
 		authorName = str(authorIdMap[author].encode('utf-8')).translate(None, string.punctuation)
 		authorName = ''.join([i for i in authorName if not i.isdigit()])
 		if len(authorPhraseMap[author]) > 20:
-			authorNamePhraseList.append((authorName, authorPhraseMap[author][:20]))
+			sortedCurrAuthorPhraseList = authorPhraseMap[author].sort(key=lambda x: sorted_phraseListNoScore.index(x))
+			authorNamePhraseList.append((authorName, sortedCurrAuthorPhraseList[:20]))
 		else:
 			authorNamePhraseList.append((authorName, authorPhraseMap[author]))
 	# authorNamePhraseMap = {}
