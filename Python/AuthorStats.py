@@ -185,6 +185,10 @@ if (__name__ == '__main__'):
 	flag9000_1 = False
 	flag9000_2 = False
 
+	predefinedNumberOfVIPAuthors = 300
+	predefinedNumberOfVIPPhrases = 300
+	commonPhrasesRecognitionCriteria = 0.9 * predefinedNumberOfVIPAuthors
+
 	for target in targetList:
 		authorList = XmlParsing(target, "au")
 		if authorList == "ERROR":
@@ -209,7 +213,7 @@ if (__name__ == '__main__'):
 				#continue
 			else:
 				fullName = firstName.split(".")[0] + " " + lastName
-				#print fullName
+
 				if not scoreList.has_key(id):
 					scoreList[id] = 1
 				else:
@@ -222,7 +226,7 @@ if (__name__ == '__main__'):
 						authorIdMap[id] = fullName
 
 	print 'Total number of authors is: ' + str(len(authorIdMap))
-	sorted_scoreList = sorted(scoreList.items(), key = operator.itemgetter(1), reverse = True)[:300]
+	sorted_scoreList = sorted(scoreList.items(), key = operator.itemgetter(1), reverse = True)[:predefinedNumberOfVIPAuthors]
 	sorted_scoreDict = {}
 	for item in sorted_scoreList:
 		sorted_scoreDict[item[0]] = item[1]
@@ -301,12 +305,15 @@ if (__name__ == '__main__'):
 
 	phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap = HITS(phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap)
 
+	newPhraseAuthorMap = {k:v for k, v in phraseAuthorMap.items() if len(v) < commonPhrasesRecognitionCriteria}
+	phraseAuthorMap = newPhraseAuthorMap
+	
 	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)
 	sorted_authorList = sorted(sorted_scoreDict.items(), key = operator.itemgetter(1), reverse = True)
 
 	sorted_phraseListNoScore = [item[0] for item in sorted_phraseList]
 
-	writeFreqToFile(sorted_phraseList[:300], 'b/sorted_phraseList.txt')
+	writeFreqToFile(sorted_phraseList[:predefinedNumberOfVIPPhrases], 'b/sorted_phraseList.txt')
 
 	authorNamePhraseList = []
 	for authorScore in sorted_authorList:
