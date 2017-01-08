@@ -313,6 +313,7 @@ if (__name__ == '__main__'):
 	sorted_authorList = sorted(sorted_scoreDict.items(), key = operator.itemgetter(1), reverse = True)
 
 	sorted_phraseListNoScore = [item[0] for item in sorted_phraseList]
+	sorted_authorListNoScore = [item[0] for item in sorted_authorList]
 
 	writeFreqToFile(sorted_phraseList[:predefinedNumberOfVIPPhrases], 'b/sorted_phraseList.txt')
 
@@ -322,12 +323,26 @@ if (__name__ == '__main__'):
 		authorName = str(authorIdMap[author].encode('utf-8')).translate(None, string.punctuation)
 		authorName = ''.join([i for i in authorName if not i.isdigit()])
 		authorPhraseMap[author] = list(set(authorPhraseMap[author]) & set(validPhraseCheckList))
-		if len(authorPhraseMap[author]) > 30:
+		if len(authorPhraseMap[author]) > 50:
 			# Important note here: list a.sort(key = lambda xxxx): this statement returns no value!
 			authorPhraseMap[author].sort(key=lambda x: sorted_phraseListNoScore.index(x))
-			authorNamePhraseList.append((authorName, authorPhraseMap[author][:30]))
+			authorNamePhraseList.append((authorName, authorPhraseMap[author][:50]))
 		else:
 			authorNamePhraseList.append((authorName, authorPhraseMap[author]))
+
+	phraseAuthorNameList = []
+	for phraseScore in sorted_phraseList:
+		phrase = phraseScore[0]
+		if phrase in validPhraseCheckList:
+			tempAuthorNameList = []
+			phraseAuthorMap[author].sort(key=lambda x: sorted_authorListNoScore.index(x))
+			if len(phraseAuthorMap[phrase]) > 30:
+				phraseAuthorMap[author] = phraseAuthorMap[author][:30]
+			for authorId in phraseAuthorMap[phrase]:
+				authorName = str(authorIdMap[authorId].encode('utf-8')).translate(None, string.punctuation)
+				authorName = ''.join([i for i in authorName if not i.isdigit()])
+				tempAuthorNameList.append(authorName)
+			phraseAuthorNameList.append((phrase, tempAuthorNameList))
 	# authorNamePhraseMap = {}
 	# for author in authorPhraseMap:
 	# 	if len(authorPhraseMap[author]) > 20:
@@ -335,6 +350,7 @@ if (__name__ == '__main__'):
 	# 	else:
 	# 		authorNamePhraseMap[authorIdMap[author]] = authorPhraseMap[author]
 	writeListToFile(authorNamePhraseList, 'b/authorNamePhraseList.txt')
+	writeListToFile(phraseAuthorNameList, 'b/phraseAuthorNameList.txt')
 
 	if flag9000_1:
 		print "1st 9000 has been reached"
