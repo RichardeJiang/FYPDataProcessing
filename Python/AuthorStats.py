@@ -55,7 +55,7 @@ def extract_candidate_words(text, good_tags=set(['JJ','JJR','JJS','NN','NNP','NN
 		if tag in good_tags and word.lower() not in stop_words and len(word) > 1]
 	return candidates
 
-def getKeyphraseByTextRank(text, n_keywords=0.04, n_windowSize=2, n_cooccurSize=2):
+def getKeyphraseByTextRank(text, n_keywords=0.05, n_windowSize=2, n_cooccurSize=2):
 	words = [word.lower()
 		for word in nltk.word_tokenize(text)
 		if len(word) > 1]
@@ -187,7 +187,7 @@ if (__name__ == '__main__'):
 
 	predefinedNumberOfVIPAuthors = 300
 	predefinedNumberOfVIPPhrases = 300
-	commonPhrasesRecognitionCriteria = 0.9 * predefinedNumberOfVIPAuthors
+	commonPhrasesRecognitionCriteria = int(0.35 * predefinedNumberOfVIPAuthors)
 
 	for target in targetList:
 		authorList = XmlParsing(target, "au")
@@ -307,6 +307,7 @@ if (__name__ == '__main__'):
 
 	newPhraseAuthorMap = {k:v for k, v in phraseAuthorMap.items() if len(v) < commonPhrasesRecognitionCriteria}
 	phraseAuthorMap = newPhraseAuthorMap
+	validPhraseCheckList = [item for item in phraseAuthorMap]
 	
 	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)
 	sorted_authorList = sorted(sorted_scoreDict.items(), key = operator.itemgetter(1), reverse = True)
@@ -320,10 +321,11 @@ if (__name__ == '__main__'):
 		author = authorScore[0]
 		authorName = str(authorIdMap[author].encode('utf-8')).translate(None, string.punctuation)
 		authorName = ''.join([i for i in authorName if not i.isdigit()])
-		if len(authorPhraseMap[author]) > 25:
+		authorPhraseMap[author] = list(set(authorPhraseMap[author]) & set(validPhraseCheckList))
+		if len(authorPhraseMap[author]) > 30:
 			# Important note here: list a.sort(key = lambda xxxx): this statement returns no value!
 			authorPhraseMap[author].sort(key=lambda x: sorted_phraseListNoScore.index(x))
-			authorNamePhraseList.append((authorName, authorPhraseMap[author][:25]))
+			authorNamePhraseList.append((authorName, authorPhraseMap[author][:30]))
 		else:
 			authorNamePhraseList.append((authorName, authorPhraseMap[author]))
 	# authorNamePhraseMap = {}
