@@ -22,7 +22,8 @@ def writeListToFile(listFile, fileName):
 	for item in listFile:
 		theFile.write("%s: " % str(item[0]))
 		for inner in item[1]:
-			theFile.write("%s " % str(inner))
+			theFile.write("%s, " % str(inner))
+		theFile.seek(-2, os.SEEK_CUR)
 		theFile.write("\n")
 	theFile.close()
 	return
@@ -187,7 +188,7 @@ if (__name__ == '__main__'):
 
 	predefinedNumberOfVIPAuthors = 300
 	predefinedNumberOfVIPPhrases = 300
-	commonPhrasesRecognitionCriteria = int(0.35 * predefinedNumberOfVIPAuthors)
+	commonPhrasesRecognitionCriteria = int(0.25 * predefinedNumberOfVIPAuthors)
 
 	for target in targetList:
 		authorList = XmlParsing(target, "au")
@@ -335,9 +336,9 @@ if (__name__ == '__main__'):
 		phrase = phraseScore[0]
 		if phrase in validPhraseCheckList:
 			tempAuthorNameList = []
-			phraseAuthorMap[author].sort(key=lambda x: sorted_authorListNoScore.index(x))
+			phraseAuthorMap[phrase].sort(key=lambda x: sorted_authorListNoScore.index(x))
 			if len(phraseAuthorMap[phrase]) > 30:
-				phraseAuthorMap[author] = phraseAuthorMap[author][:30]
+				phraseAuthorMap[phrase] = phraseAuthorMap[author][:30]
 			for authorId in phraseAuthorMap[phrase]:
 				authorName = str(authorIdMap[authorId].encode('utf-8')).translate(None, string.punctuation)
 				authorName = ''.join([i for i in authorName if not i.isdigit()])
