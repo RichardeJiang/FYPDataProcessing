@@ -5,6 +5,7 @@ import re
 import nltk
 from nltk.stem.snowball import SnowballStemmer
 from itertools import takewhile, tee, izip, chain
+from collections import Counter
 import os
 import math
 import numpy as np
@@ -33,6 +34,17 @@ def writeFreqToFile(listFile, fileName):
 	for item in listFile:
 		theFile.write("%s: " % str(item[0]))
 		theFile.write("%s\n" % str(item[1]))
+	return
+
+def writeScoreListToFile(listFile, fileName):
+	theFile = open(fileName, "w")
+	for k, v in listFile.items():
+		theFile.write("%s: " % k)
+		for node in v:
+			theFile.write("%s, " % str(node))
+		theFile.seek(-2, os.SEEK_CUR)
+		theFile.write("\n")
+	theFile.close()
 	return
 
 def XmlParsing(targetFile, targetTag):
@@ -144,7 +156,7 @@ def removeDuplicates(seq):
 	return [x for x in seq if not (x in seen or seen_add(x))]
 
 def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
-	for count in range(0, 10000):
+	for count in range(0, 1000):
 		norm = 0.0
 		for author in authorPhraseMap:
 			currPhraseList = authorPhraseMap[author]
@@ -172,6 +184,41 @@ def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
 			phraseScoreList[phrase] = phraseScoreList[phrase] / norm
 
 	return phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap
+
+def getLastingPhrases(phraseScoreListList):
+	newList = []
+	for phraseScoreList in phraseScoreListList:
+		newList += [ele for ele in phraseScoreList]
+	#keySet = set([ele[0] for ele in Counter(newList).most_common(500) if ele[1] == years])
+	keySet = [ele[0] for ele in Counter(newList).most_common(500)]
+	result = {key:[] for key in keySet}
+	for index in range(len(phraseScoreListList)):
+		temp = {k:v for k, v in phraseScoreListList[index].items() if k in keySet}
+		for key in temp:
+			result[key].append(temp[key])
+	return result
+
+def getLastingPhrasesDirect(phraseScoreListList, keyphrasesList):
+	years = len(phraseScoreListList)
+	result = {key:[0 for n in range(years)] for key in keyphrasesList}
+	for index in range(years):
+		for key in keyphrasesList:
+			if phraseScoreListList[index].has_key(key):
+				result[key][index] = phraseScoreListList[index][key]
+	return result
+
+def readKeyphrasesFromFile(fileName):
+	top500Phrases = []
+	index = 0
+	with open(fileName) as theFile:
+		for line in theFile:
+			parts = line.split(":")
+			top500Phrases.append(parts[0])
+			index += 1
+			if index > 500:
+				break
+	return top500Phrases[:500]
+
 
 if (__name__ == '__main__'):
 	fileList = os.listdir('.')
@@ -259,6 +306,13 @@ if (__name__ == '__main__'):
 	phraseScoreList = {}
 	phraseAuthorMap = {}
 
+	baseYear = 1950
+	yearsInRecord = 70
+
+	authorPhraseMapList = [{author:[] for author in sorted_scoreDict} for n in range(70)]
+	phraseScoreListList = [{} for n in range(70)]
+	phraseAuthorMapList = [{} for n in range(70)]
+
 	count = 0
 	for target in targetList:
 		articleList = XmlParsing(target, "article_rec")
@@ -272,7 +326,13 @@ if (__name__ == '__main__'):
 
 		for article in articleList:
 			authors = article.getElementsByTagName("author_profile_id")
-			timeStamps = article.getElementsByTagName("article_publication_date")
+
+			timeStamp = int(article.getElementsByTagName("article_publication_date").item(0).childNodes[0].data.split("-")[2])
+			offset = timeStamp - baseYear
+			authorPhraseMap = authorPhraseMapList[offset]
+			phraseScoreList = phraseScoreListList[offset]
+			phraseAuthorMap = phraseAuthorMapList[offset]
+
 			currAuthorMap = [item.childNodes[0].data for item in authors]
 			if (len(set(currAuthorMap) & set(authorMap)) > 0):
 				abstract = article.getElementsByTagName("ft_body")
@@ -305,7 +365,17 @@ if (__name__ == '__main__'):
 							temp = list(set(phraseAuthorMap[currPhrase]) | VIPAuthorSet)
 							phraseAuthorMap[currPhrase] = temp
 
+	phraseScoreListList = [ele for ele in phraseScoreListList if bool(ele)]
+	phraseAuthorMapList = [ele for ele in phraseAuthorMapList if bool(ele)]
+	authorPhraseMapList = [ele for ele in authorPhraseMapList if bool(ele)]
+	readKeyphrasesFromFile("phraseAuthorNameList.txt")
+	years = len(phraseScoreListList)
+
 	phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap = HITS(phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap)
+
+	# objective: a list of scores for each of the important keyphrases
+	# only need the phraseScoreList to process
+	resultList = getLastingPhrases(phraseScoreListList)
 
 	newPhraseAuthorMap = {k:v for k, v in phraseAuthorMap.items() if len(v) < commonPhrasesRecognitionCriteria}
 	phraseAuthorMap = newPhraseAuthorMap
