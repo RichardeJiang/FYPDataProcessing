@@ -6,6 +6,7 @@ import nltk
 from nltk.stem.snowball import SnowballStemmer
 from itertools import takewhile, tee, izip, chain
 from collections import Counter
+import copy
 import os
 import math
 import numpy as np
@@ -368,62 +369,16 @@ if (__name__ == '__main__'):
 	phraseScoreListList = [ele for ele in phraseScoreListList if bool(ele)]
 	phraseAuthorMapList = [ele for ele in phraseAuthorMapList if bool(ele)]
 	authorPhraseMapList = [ele for ele in authorPhraseMapList if bool(ele)]
-	readKeyphrasesFromFile("phraseAuthorNameList.txt")
+	keyphrasesList = readKeyphrasesFromFile("b/phraseAuthorNameList.txt")
 	years = len(phraseScoreListList)
 
-	phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap = HITS(phraseScoreList, phraseAuthorMap, sorted_scoreDict, authorPhraseMap)
+	for i in range(years):
+		tempAuthorScoreMap = {k:v for k, v in sorted_scoreDict.items() if k in authorPhraseMapList[i].keys()}
+		phraseScoreListList[i], phraseAuthorMapList[i], tempAuthorScoreMap, authorPhraseMapList[i] = HITS(phraseScoreListList[i], phraseAuthorMapList[i], tempAuthorScoreMap, authorPhraseMapList[i])
 
-	# objective: a list of scores for each of the important keyphrases
-	# only need the phraseScoreList to process
-	resultList = getLastingPhrases(phraseScoreListList)
-
-	newPhraseAuthorMap = {k:v for k, v in phraseAuthorMap.items() if len(v) < commonPhrasesRecognitionCriteria}
-	phraseAuthorMap = newPhraseAuthorMap
-	validPhraseCheckList = [item for item in phraseAuthorMap]
+	# Now this is the regression data to be used
+	keyphraseTimeSeries = getLastingPhrasesDirect(phraseScoreListList, keyphrasesList)
 	
-	sorted_phraseList = sorted(phraseScoreList.items(), key = operator.itemgetter(1), reverse = True)
-	sorted_authorList = sorted(sorted_scoreDict.items(), key = operator.itemgetter(1), reverse = True)
-
-	sorted_phraseListNoScore = [item[0] for item in sorted_phraseList]
-	sorted_authorListNoScore = [item[0] for item in sorted_authorList]
-
-	writeFreqToFile(sorted_phraseList[:predefinedNumberOfVIPPhrases], 'b/sorted_phraseList.txt')
-
-	authorNamePhraseList = []
-	for authorScore in sorted_authorList:
-		author = authorScore[0]
-		authorName = str(authorIdMap[author].encode('utf-8')).translate(None, string.punctuation)
-		authorName = ''.join([i for i in authorName if not i.isdigit()])
-		authorPhraseMap[author] = list(set(authorPhraseMap[author]) & set(validPhraseCheckList))
-		if len(authorPhraseMap[author]) > 50:
-			# Important note here: list a.sort(key = lambda xxxx): this statement returns no value!
-			authorPhraseMap[author].sort(key=lambda x: sorted_phraseListNoScore.index(x))
-			authorNamePhraseList.append((authorName, authorPhraseMap[author][:50]))
-		else:
-			authorNamePhraseList.append((authorName, authorPhraseMap[author]))
-
-	phraseAuthorNameList = []
-	for phraseScore in sorted_phraseList:
-		phrase = phraseScore[0]
-		if phrase in validPhraseCheckList:
-			tempAuthorNameList = []
-			phraseAuthorMap[phrase].sort(key=lambda x: sorted_authorListNoScore.index(x))
-			if len(phraseAuthorMap[phrase]) > 30:
-				phraseAuthorMap[phrase] = phraseAuthorMap[author][:30]
-			for authorId in phraseAuthorMap[phrase]:
-				authorName = str(authorIdMap[authorId].encode('utf-8')).translate(None, string.punctuation)
-				authorName = ''.join([i for i in authorName if not i.isdigit()])
-				tempAuthorNameList.append(authorName)
-			phraseAuthorNameList.append((phrase, tempAuthorNameList))
-	# authorNamePhraseMap = {}
-	# for author in authorPhraseMap:
-	# 	if len(authorPhraseMap[author]) > 20:
-	# 		authorNamePhraseMap[authorIdMap[author]] = authorPhraseMap[author][:20]
-	# 	else:
-	# 		authorNamePhraseMap[authorIdMap[author]] = authorPhraseMap[author]
-	writeListToFile(authorNamePhraseList, 'b/authorNamePhraseList.txt')
-	writeListToFile(phraseAuthorNameList, 'b/phraseAuthorNameList.txt')
-
 	if flag9000_1:
 		print "1st 9000 has been reached"
 
