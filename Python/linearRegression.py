@@ -40,7 +40,7 @@ def splitData(timeSeries):
 	return resultXList, resultYList
 
 if (__name__ == "__main__"):
-	fileName = "c/keyPhraseTimeSeries.txt"
+	fileName = "keyPhraseTimeSeries.txt"
 	phraseList, timeSeries = readTimeSeriesData(fileName)
 
 	dataXList, dataYList = splitData(timeSeries)
@@ -64,9 +64,9 @@ if (__name__ == "__main__"):
 		plt.hlines(y = 0, xmin = 0, xmax = 50)
 		plt.title("Train: blue; Test: green")
 		plt.ylabel("Residuals")
-		plt.savefig("c/plots/" + str(phraseList[index]) + ".png")
+		plt.savefig("plots/" + str(phraseList[index]) + ".png")
 		plt.close()
-		
-	writeScore(meanSquareError, "c/data/mean.txt")
-	writeScore(varianceScore, "c/data/variance.txt")
+
+	writeScore(meanSquareError, "data/mean.txt")
+	writeScore(varianceScore, "data/variance.txt")
 	pass
