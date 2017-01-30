@@ -22,10 +22,10 @@ sys.setdefaultencoding('utf8')
 def writeListToFile(listFile, fileName):
 	theFile = open(fileName, 'w')
 	for item in listFile:
-		theFile.write("%s: " % str(item[0]))
-		for inner in item[1]:
-			theFile.write("%s, " % str(inner))
-		theFile.seek(-2, os.SEEK_CUR)
+		theFile.write("%s:" % str(item))
+		for inner in listFile[item]:
+			theFile.write("%s " % str(inner))
+		theFile.seek(-1, os.SEEK_CUR)
 		theFile.write("\n")
 	theFile.close()
 	return
@@ -280,6 +280,7 @@ if (__name__ == '__main__'):
 	for item in sorted_scoreList:
 		sorted_scoreDict[item[0]] = item[1]
 	
+	writeFreqToFile(sorted_scoreList, "c/sorted_scoreList.txt")
 	# Fundamental logic of HITS Algorithm
 	# every doc, get keyphrases, with initial score of TextRankScore x sum(authorScore)
 	# authorScore update according to normalized sum of keyphrases score ... 1
@@ -366,19 +367,24 @@ if (__name__ == '__main__'):
 							temp = list(set(phraseAuthorMap[currPhrase]) | VIPAuthorSet)
 							phraseAuthorMap[currPhrase] = temp
 
-	phraseScoreListList = [ele for ele in phraseScoreListList if bool(ele)]
-	phraseAuthorMapList = [ele for ele in phraseAuthorMapList if bool(ele)]
-	authorPhraseMapList = [ele for ele in authorPhraseMapList if bool(ele)]
+	# phraseScoreListList = [ele for ele in phraseScoreListList if bool(ele)]
+	# phraseAuthorMapList = [ele for ele in phraseAuthorMapList if bool(ele)]
+	# authorPhraseMapList = [ele for ele in authorPhraseMapList if bool(ele)]
 	keyphrasesList = readKeyphrasesFromFile("b/phraseAuthorNameList.txt")
-	years = len(phraseScoreListList)
+
+	tempPhraseScoreListList = [ele for ele in phraseScoreListList if bool(ele)]
+	startingYear = phraseScoreListList.index(tempPhraseScoreListList[0])
+	years = len(tempPhraseScoreListList)
 
 	for i in range(years):
-		tempAuthorScoreMap = {k:v for k, v in sorted_scoreDict.items() if k in authorPhraseMapList[i].keys()}
-		phraseScoreListList[i], phraseAuthorMapList[i], tempAuthorScoreMap, authorPhraseMapList[i] = HITS(phraseScoreListList[i], phraseAuthorMapList[i], tempAuthorScoreMap, authorPhraseMapList[i])
+		tempAuthorScoreMap = {k:v for k, v in sorted_scoreDict.items() if k in authorPhraseMapList[i + startingYear].keys()}
+		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
 
 	# Now this is the regression data to be used
 	keyphraseTimeSeries = getLastingPhrasesDirect(phraseScoreListList, keyphrasesList)
 	
+	writeListToFile(keyphraseTimeSeries, "c/keyPhraseTimeSeries.txt")
+
 	if flag9000_1:
 		print "1st 9000 has been reached"
 
