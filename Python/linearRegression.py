@@ -48,25 +48,44 @@ if (__name__ == "__main__"):
 	dataYList = np.asarray(dataYList)
 
 	regression = linear_model.LinearRegression()
+	ridge = linear_model.Ridge(alpha = 0.5)
 	phraseCount = len(phraseList)
 	meanSquareError = {}
 	varianceScore = {}
+	meanSquareErrorRidge = {}
+	varianceScoreRidge = {}
 	for index in range(phraseCount):
 		XList = dataXList[index]
 		YList = dataYList[index]
 		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = 0.2, random_state = 42)
 		regression.fit(XTrain, YTrain)
+		ridge.fit(XTrain, YTrain)
+
 		meanSquareError[phraseList[index]] = np.mean((regression.predict(XTest) - YTest) ** 2)
 		varianceScore[phraseList[index]] = regression.score(XTest, YTest)
 
+		meanSquareErrorRidge[phraseList[index]] = np.mean((ridge.predict(XTest) - YTest) ** 2)
+		varianceScoreRidge[phraseList[index]] = ridge.score(XTest, YTest)
+
 		plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
 		plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
-		plt.hlines(y = 0, xmin = 0, xmax = 50)
+		plt.hlines(y = 0, xmin = 0, xmax = 0.1)
 		plt.title("Train: blue; Test: green")
 		plt.ylabel("Residuals")
-		plt.savefig("plots/" + str(phraseList[index]) + ".png")
+		plt.savefig("plots/" + str(index + 1) + "-" + str(phraseList[index]) + "-linear.png")
 		plt.close()
 
-	writeScore(meanSquareError, "data/mean.txt")
-	writeScore(varianceScore, "data/variance.txt")
+		plt.scatter(ridge.predict(XTrain), ridge.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
+		plt.scatter(ridge.predict(XTest), ridge.predict(XTest) - YTest, color = 'g', s = 40)
+		plt.hlines(y = 0, xmin = 0, xmax = 0.01)
+		plt.title("Train: blue; Test: green")
+		plt.ylabel("Residuals")
+		plt.savefig("plots/" + str(index + 1) + "-" + str(phraseList[index]) + "-ridge.png")
+		plt.close()
+
+	writeScore(meanSquareError, "data/meanLinear.txt")
+	writeScore(varianceScore, "data/varianceLinear.txt")
+
+	writeScore(meanSquareErrorRidge, "data/meanRidge.txt")
+	writeScore(varianceScoreRidge, "data/varianceRidge.txt")
 	pass

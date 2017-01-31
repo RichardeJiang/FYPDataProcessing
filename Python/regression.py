@@ -381,6 +381,8 @@ if (__name__ == '__main__'):
 		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
 
 	# Now this is the regression data to be used
+	#phraseScoreListList = [ele[startingYear:] for ele in phraseScoreListList]
+	phraseScoreListList = phraseScoreListList[startingYear:]
 	keyphraseTimeSeries = getLastingPhrasesDirect(phraseScoreListList, keyphrasesList)
 	
 	writeListToFile(keyphraseTimeSeries, "c/keyPhraseTimeSeries.txt")
