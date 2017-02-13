@@ -26,11 +26,13 @@ def readTimeSeriesData(fileName):
 def splitData(timeSeries):
 	resultXList = []
 	resultYList = []
+	maxNum = 0.0
 	for phraseSeries in timeSeries:
 		resultX = []
 		resultY = []
 		phraseSeries = phraseSeries[:-4]
-		#print len(phraseSeries)
+		if max(phraseSeries) > maxNum:
+			maxNum = max(phraseSeries)
 		size = len(phraseSeries)
 		for i in range(size - 3):
 			resultX.append(phraseSeries[i: i+3])
@@ -38,6 +40,8 @@ def splitData(timeSeries):
 
 		resultXList.append(resultX)
 		resultYList.append(resultY)
+
+	print maxNum
 	return resultXList, resultYList
 
 if (__name__ == "__main__"):
@@ -65,8 +69,12 @@ if (__name__ == "__main__"):
 		meanSquareError[phraseList[index]] = np.mean((regression.predict(XTest) - YTest) ** 2)
 		varianceScore[phraseList[index]] = regression.score(XTest, YTest)
 
+		coef = regression.coef_
+
 		meanSquareErrorRidge[phraseList[index]] = np.mean((ridge.predict(XTest) - YTest) ** 2)
 		varianceScoreRidge[phraseList[index]] = ridge.score(XTest, YTest)
+
+		coefRidge = ridge.coef_
 
 		plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
 		plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
@@ -84,8 +92,17 @@ if (__name__ == "__main__"):
 		plt.savefig("plots90/" + str(index + 1) + "-" + str(phraseList[index]) + "-ridge.png")
 		plt.close()
 
-	writeScore(meanSquareError, "data90/meanLinear.txt")
-	writeScore(varianceScore, "data90/varianceLinear.txt")
+		print "Coef for linear: "
+		print coef
+
+		print "Coef for ridge: "
+		print coefRidge
+
+		if index == 50:
+			break
+
+	writeScore(meanSquareError, "data/meanLinear.txt")
+	writeScore(varianceScore, "data/varianceLinear.txt")
 
 	writeScore(meanSquareErrorRidge, "data90/meanRidge.txt")
 	writeScore(varianceScoreRidge, "data90/varianceRidge.txt")
