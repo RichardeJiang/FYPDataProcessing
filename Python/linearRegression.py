@@ -30,6 +30,7 @@ def splitData(timeSeries):
 		resultX = []
 		resultY = []
 		phraseSeries = phraseSeries[:-4]
+		#print len(phraseSeries)
 		size = len(phraseSeries)
 		for i in range(size - 3):
 			resultX.append(phraseSeries[i: i+3])
@@ -57,7 +58,7 @@ if (__name__ == "__main__"):
 	for index in range(phraseCount):
 		XList = dataXList[index]
 		YList = dataYList[index]
-		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = 0.2, random_state = 42)
+		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = 0.1, random_state = 42)
 		regression.fit(XTrain, YTrain)
 		ridge.fit(XTrain, YTrain)
 
@@ -72,20 +73,20 @@ if (__name__ == "__main__"):
 		plt.hlines(y = 0, xmin = 0, xmax = 0.1)
 		plt.title("Train: blue; Test: green")
 		plt.ylabel("Residuals")
-		plt.savefig("plots/" + str(index + 1) + "-" + str(phraseList[index]) + "-linear.png")
+		plt.savefig("plots90/" + str(index + 1) + "-" + str(phraseList[index]) + "-linear.png")
 		plt.close()
 
 		plt.scatter(ridge.predict(XTrain), ridge.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
 		plt.scatter(ridge.predict(XTest), ridge.predict(XTest) - YTest, color = 'g', s = 40)
-		plt.hlines(y = 0, xmin = 0, xmax = 0.01)
+		plt.hlines(y = 0, xmin = 0, xmax = 0.00000001)
 		plt.title("Train: blue; Test: green")
 		plt.ylabel("Residuals")
-		plt.savefig("plots/" + str(index + 1) + "-" + str(phraseList[index]) + "-ridge.png")
+		plt.savefig("plots90/" + str(index + 1) + "-" + str(phraseList[index]) + "-ridge.png")
 		plt.close()
 
-	writeScore(meanSquareError, "data/meanLinear.txt")
-	writeScore(varianceScore, "data/varianceLinear.txt")
+	writeScore(meanSquareError, "data90/meanLinear.txt")
+	writeScore(varianceScore, "data90/varianceLinear.txt")
 
-	writeScore(meanSquareErrorRidge, "data/meanRidge.txt")
-	writeScore(varianceScoreRidge, "data/varianceRidge.txt")
+	writeScore(meanSquareErrorRidge, "data90/meanRidge.txt")
+	writeScore(varianceScoreRidge, "data90/varianceRidge.txt")
 	pass
