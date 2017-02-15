@@ -157,6 +157,8 @@ def removeDuplicates(seq):
 	return [x for x in seq if not (x in seen or seen_add(x))]
 
 def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
+	norm1 = 0.0
+	norm2 = 0.0
 	for count in range(0, 1000):
 		norm = 0.0
 		for author in authorPhraseMap:
@@ -171,6 +173,8 @@ def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
 		for author in authorScoreList:
 			authorScoreList[author] = authorScoreList[author] / norm
 
+		norm1 = norm
+
 		norm = 0.0
 		for phrase in phraseAuthorMap:
 			currAuthorList = phraseAuthorMap[phrase]
@@ -183,6 +187,18 @@ def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
 		norm = math.sqrt(norm)
 		for phrase in phraseScoreList:
 			phraseScoreList[phrase] = phraseScoreList[phrase] / norm
+
+		norm2 = norm
+
+	### this part should be deleted if normalization and scaling are done through calculated list in linearRegression.py
+
+	for author in authorScoreList:
+		authorScoreList[author] = authorScoreList[author] * norm1 * 100
+
+	for phrase in phraseScoreList:
+		phraseScoreList[phrase] = phraseScoreList[phrase] * norm2 * 100
+
+	### end of deleted part
 
 	return phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap
 
@@ -216,9 +232,9 @@ def readKeyphrasesFromFile(fileName):
 			parts = line.split(":")
 			top500Phrases.append(parts[0])
 			index += 1
-			if index > 500:
+			if index > 5000:
 				break
-	return top500Phrases[:500]
+	return top500Phrases[:5000]
 
 
 if (__name__ == '__main__'):
@@ -385,7 +401,7 @@ if (__name__ == '__main__'):
 	phraseScoreListList = phraseScoreListList[startingYear:]
 	keyphraseTimeSeries = getLastingPhrasesDirect(phraseScoreListList, keyphrasesList)
 	
-	writeListToFile(keyphraseTimeSeries, "c/keyPhraseTimeSeries.txt")
+	writeListToFile(keyphraseTimeSeries, "c/keyPhraseTimeSeries5000WithScalingx100.txt")
 
 	if flag9000_1:
 		print "1st 9000 has been reached"
