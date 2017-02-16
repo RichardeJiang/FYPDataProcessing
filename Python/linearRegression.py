@@ -62,14 +62,34 @@ def splitData2(timeSeries, windowSize):
 
 	return resultXList, resultYList, size
 
+def formBinaryTrainingList(localCoef, XList, YList, globalCoefList):
+	resultXList = []
+	resultYList = []
+	size = len(XList)
+	years = globalCoefList.keys()
+	startingYear = min(years)
+	for index in range(size):
+		x = XList[index]
+		y = YList[index]
+		globalCoef = globalCoefList[startingYear + index]
+		print x
+		print localCoef[0]
+		print globalCoef
+		localSum = np.dot(x, localCoef[0])
+		globalSum = np.dot(x, globalCoef)
+		resultYList.append(float(y - globalSum))
+		resultXList.append([float(localSum - globalSum)])
+	return resultXList, resultYList
+
 if (__name__ == "__main__"):
-	fileName = "keyPhraseTimeSeries.txt"
+	fileName = "keyPhraseTimeSeries5000WithScalingx100.txt"
 	phraseList, timeSeries = readTimeSeriesData(fileName)
 	windowSize = 3
+	testSize = 20
 
-	# dataXList, dataYList = splitData(timeSeries)
-	# dataXList = np.asarray(dataXList)
-	# dataYList = np.asarray(dataYList)
+	dataXList, dataYList = splitData(timeSeries)
+	dataXList = np.asarray(dataXList)
+	dataYList = np.asarray(dataYList)
 
 	fullXList, fullYList, yearCover = splitData2(timeSeries, windowSize)
 	fullXList = np.asarray(fullXList)
@@ -83,10 +103,11 @@ if (__name__ == "__main__"):
 	coefRegression = {}
 	meanSquareErrorRidge = {}
 	varianceScoreRidge = {}
+
 	for index in range(yearCover):
 		XList = fullXList[index]
 		YList = fullYList[index]
-		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = 0.2, random_state = 42)
+		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = float(testSize / 100.0), random_state = 42)
 		regression.fit(XTrain, YTrain)
 
 		meanSquareError[2015 - yearCover - windowSize + index] = np.mean((regression.predict(XTest) - YTest) ** 2)
@@ -95,63 +116,49 @@ if (__name__ == "__main__"):
 
 		plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
 		plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
-		plt.hlines(y = 0, xmin = 0, xmax = 0.05)
-		plt.title("Train: blue; Test: green")
+		plt.hlines(y = 0, xmin = 0, xmax = 100)
+		plt.title("Train: blue; Test: green; Starting Year: " + str(2015 - yearCover - windowSize + index))
 		plt.ylabel("Residuals")
-		plt.savefig("full80/" + str(2015 - yearCover - windowSize + index) + "-linear.png")
+		plt.savefig("full80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-linear-scaled.png")
 		plt.close()
 
-	writeScore(meanSquareError, "full80/meanLinear80.txt")
-	writeScore(varianceScore, "full80/varianceLinear80.txt")
-	writeScore(coefRegression, "full80/coef80.txt")
+	writeScore(meanSquareError, "full80/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
+	writeScore(varianceScore, "full80/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
+	writeScore(coefRegression, "full80/coef-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 
+	coefRegressionPhrase = {}
+	alphaList = {}
+	# mixing algorithm
+	for index in range(phraseCount):
+		XList = dataXList[index]
+		YList = dataYList[index]
+		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = float(testSize / 100.0), random_state = 42)
+		regression.fit(XTrain, YTrain)
+
+		# meanSquareError[phraseList[index]] = np.mean((regression.predict(XTest) - YTest) ** 2)
+		# varianceScore[phraseList[index]] = regression.score(XTest, YTest)
+
+		phrase = phraseList[index]
+		#localCoef = coefRegressionPhrase[str(phrase)]
+		localCoef = regression.coef_
+		coefRegressionPhrase[str(phraseList[index])] = localCoef
+
+		resultXList, resultYList = formBinaryTrainingList(localCoef, XList, YList, coefRegression)
+		XTrain, XTest, YTrain, YTest = train_test_split(resultXList, resultYList, test_size = float(testSize / 100.0), random_state = 42)
+		regression.fit(XTrain, YTrain)
+
+		alphaList[phrase] = regression.coef_
+
+		plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
+		plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
+		plt.hlines(y = 0, xmin = 0, xmax = 100)
+		plt.title("Train: blue; Test: green; Phrase: " + phrase)
+		plt.ylabel("Residuals")
+		plt.savefig("mix" + str(windowSize) + "/" + str(index + 1) + "-" + str(phrase) + "-linear.png")
+		plt.close()
+
+		if index == 30:
+			break
+
+	writeScore(alphaList, "mix" + str(windowSize) + "/alphaList.txt")
 	pass
-
-	# for index in range(phraseCount):
-	# 	XList = dataXList[index]
-	# 	YList = dataYList[index]
-	# 	XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = 0.1, random_state = 42)
-	# 	regression.fit(XTrain, YTrain)
-	# 	ridge.fit(XTrain, YTrain)
-
-	# 	meanSquareError[phraseList[index]] = np.mean((regression.predict(XTest) - YTest) ** 2)
-	# 	varianceScore[phraseList[index]] = regression.score(XTest, YTest)
-
-	# 	coef = regression.coef_
-
-	# 	meanSquareErrorRidge[phraseList[index]] = np.mean((ridge.predict(XTest) - YTest) ** 2)
-	# 	varianceScoreRidge[phraseList[index]] = ridge.score(XTest, YTest)
-
-	# 	coefRidge = ridge.coef_
-
-	# 	plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
-	# 	plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
-	# 	plt.hlines(y = 0, xmin = 0, xmax = 0.1)
-	# 	plt.title("Train: blue; Test: green")
-	# 	plt.ylabel("Residuals")
-	# 	plt.savefig("plots90/" + str(index + 1) + "-" + str(phraseList[index]) + "-linear.png")
-	# 	plt.close()
-
-	# 	plt.scatter(ridge.predict(XTrain), ridge.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
-	# 	plt.scatter(ridge.predict(XTest), ridge.predict(XTest) - YTest, color = 'g', s = 40)
-	# 	plt.hlines(y = 0, xmin = 0, xmax = 0.00000001)
-	# 	plt.title("Train: blue; Test: green")
-	# 	plt.ylabel("Residuals")
-	# 	plt.savefig("plots90/" + str(index + 1) + "-" + str(phraseList[index]) + "-ridge.png")
-	# 	plt.close()
-
-	# 	print "Coef for linear: "
-	# 	print coef
-
-	# 	print "Coef for ridge: "
-	# 	print coefRidge
-
-	# 	if index == 50:
-	# 		break
-
-	# writeScore(meanSquareError, "data/meanLinear.txt")
-	# writeScore(varianceScore, "data/varianceLinear.txt")
-
-	# writeScore(meanSquareErrorRidge, "data90/meanRidge.txt")
-	# writeScore(varianceScoreRidge, "data90/varianceRidge.txt")
-	# pass

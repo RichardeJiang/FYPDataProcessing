@@ -224,6 +224,15 @@ def getLastingPhrasesDirect(phraseScoreListList, keyphrasesList):
 				result[key][index] = phraseScoreListList[index][key]
 	return result
 
+def getLastingAuthorsDirect(authorScoreListList, authorList):
+	years = len(authorScoreListList)
+	result = {key:[0 for n in range(years)] for key in authorList}
+	for index in range(years):
+		for key in authorList:
+			if authorScoreListList[index].has_key(key):
+				result[key][index] = authorScoreListList[index][key]
+	return result
+
 def readKeyphrasesFromFile(fileName):
 	top500Phrases = []
 	index = 0
@@ -331,6 +340,8 @@ if (__name__ == '__main__'):
 	phraseScoreListList = [{} for n in range(70)]
 	phraseAuthorMapList = [{} for n in range(70)]
 
+	authorScoreListList = [{} for n in range(70)]
+
 	count = 0
 	for target in targetList:
 		articleList = XmlParsing(target, "article_rec")
@@ -394,14 +405,18 @@ if (__name__ == '__main__'):
 
 	for i in range(years):
 		tempAuthorScoreMap = {k:v for k, v in sorted_scoreDict.items() if k in authorPhraseMapList[i + startingYear].keys()}
-		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
+		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
 
 	# Now this is the regression data to be used
 	#phraseScoreListList = [ele[startingYear:] for ele in phraseScoreListList]
+	keyAuthorList = [item[0] for item in sorted_scoreList]
 	phraseScoreListList = phraseScoreListList[startingYear:]
+	authorScoreListList = authorScoreListList[startingYear:]
 	keyphraseTimeSeries = getLastingPhrasesDirect(phraseScoreListList, keyphrasesList)
+	keyAuthorTimeSeries = getLastingAuthorsDirect(authorScoreListList, keyAuthorList)
 	
 	writeListToFile(keyphraseTimeSeries, "c/keyPhraseTimeSeries5000WithScalingx100.txt")
+	writeListToFile(keyAuthorTimeSeries, "c/keyAuthorTimeSeriesWithScalingx100.txt")
 
 	if flag9000_1:
 		print "1st 9000 has been reached"
