@@ -245,6 +245,16 @@ def readKeyphrasesFromFile(fileName):
 				break
 	return top500Phrases[:5000]
 
+def aggregatePhraseScore(keyPhraseScoreTimeSeries):
+	aggregateCoefficient = 0.2
+	years = len(keyPhraseScoreTimeSeries.values()[0])
+	numOfPhrases = len(keyPhraseScoreTimeSeries)
+	result = {key:[0 for n in range(years)] for key in keyPhraseScoreTimeSeries}
+	for phrase, scoreList in keyPhraseScoreTimeSeries.iteritems():
+		for index in range(0, years - 1):
+			scoreList[index + 1] = scoreList[index + 1] * (1 - aggregateCoefficient) + scoreList[index] * aggregateCoefficient
+		result[key] = scoreList
+	return result
 
 if (__name__ == '__main__'):
 	fileList = os.listdir('.')
