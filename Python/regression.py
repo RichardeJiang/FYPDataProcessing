@@ -156,6 +156,61 @@ def removeDuplicates(seq):
 	seen_add = seen.add
 	return [x for x in seq if not (x in seen or seen_add(x))]
 
+def HITSMix(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap, prevPhraseScoreList, prevAuthorScoreList):
+	norm1 = 0.0
+	norm2 = 0.0
+	aggregate = 0.3
+	for phrase, score in phraseScoreList.iteritems():
+		if prevPhraseScoreList.has_key(phrase):
+			phraseScoreList[phrase] = prevPhraseScoreList[phrase] * aggregate + 100 * score * (1 - aggregate)
+
+	for author, score in authorScoreList.iteritems():
+		if prevAuthorScoreList.has_key(author):
+			authorScoreList[author] = prevAuthorScoreList[author] * aggregate + 100 * score * (1 - aggregate)
+
+	for count in range(0, 500):
+		norm = 0.0
+		for author in authorPhraseMap:
+			currPhraseList = authorPhraseMap[author]
+			authorScore = 0
+			for phrase in currPhraseList:
+				authorScore += phraseScoreList[phrase]
+
+			norm += (authorScore ** 2)
+			authorScoreList[author] = authorScore
+		norm = math.sqrt(norm)
+		for author in authorScoreList:
+			authorScoreList[author] = authorScoreList[author] / norm
+
+		norm1 = norm
+
+		norm = 0.0
+		for phrase in phraseAuthorMap:
+			currAuthorList = phraseAuthorMap[phrase]
+			phraseScore = 0
+			for author in currAuthorList:
+				phraseScore += authorScoreList[author]
+
+			norm += (phraseScore ** 2)
+			phraseScoreList[phrase] = phraseScore
+		norm = math.sqrt(norm)
+		for phrase in phraseScoreList:
+			phraseScoreList[phrase] = phraseScoreList[phrase] / norm
+
+		norm2 = norm
+
+	### this part should be deleted if normalization and scaling are done through calculated list in linearRegression.py
+
+	for author in authorScoreList:
+		authorScoreList[author] = authorScoreList[author] * norm1 * 100
+
+	for phrase in phraseScoreList:
+		phraseScoreList[phrase] = phraseScoreList[phrase] * norm2 * 100
+
+	### end of deleted part
+
+	return phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap
+
 def HITS(phraseScoreList, phraseAuthorMap, authorScoreList, authorPhraseMap):
 	norm1 = 0.0
 	norm2 = 0.0
@@ -256,6 +311,9 @@ def aggregatePhraseScore(keyPhraseScoreTimeSeries):
 		result[key] = scoreList
 	return result
 
+def generalAggregation(dictFile):
+	return
+
 if (__name__ == '__main__'):
 	fileList = os.listdir('.')
 	targetList = []
@@ -269,8 +327,8 @@ if (__name__ == '__main__'):
 	flag9000_1 = False
 	flag9000_2 = False
 
-	predefinedNumberOfVIPAuthors = 300
-	predefinedNumberOfVIPPhrases = 300
+	predefinedNumberOfVIPAuthors = 500
+	predefinedNumberOfVIPPhrases = 500
 	commonPhrasesRecognitionCriteria = int(0.25 * predefinedNumberOfVIPAuthors)
 
 	for target in targetList:
@@ -415,8 +473,10 @@ if (__name__ == '__main__'):
 
 	for i in range(years):
 		tempAuthorScoreMap = {k:v for k, v in sorted_scoreDict.items() if k in authorPhraseMapList[i + startingYear].keys()}
-		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
-
+		if i > 0:
+			phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITSMix(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear], phraseScoreListList[i + startingYear - 1], authorScoreListList[i + startingYear - 1])
+		else :
+			phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
 	# Now this is the regression data to be used
 	#phraseScoreListList = [ele[startingYear:] for ele in phraseScoreListList]
 	keyAuthorList = [item[0] for item in sorted_scoreList]
@@ -425,8 +485,8 @@ if (__name__ == '__main__'):
 	keyphraseTimeSeries = getLastingPhrasesDirect(phraseScoreListList, keyphrasesList)
 	keyAuthorTimeSeries = getLastingAuthorsDirect(authorScoreListList, keyAuthorList)
 	
-	writeListToFile(keyphraseTimeSeries, "c/keyPhraseTimeSeries5000WithScalingx100.txt")
-	writeListToFile(keyAuthorTimeSeries, "c/keyAuthorTimeSeriesWithScalingx100.txt")
+	writeListToFile(keyphraseTimeSeries, "d/keyPhraseTimeSeries5000WithScalingx100-agg30.txt")
+	writeListToFile(keyAuthorTimeSeries, "d/keyAuthorTimeSeriesWithScalingx100-agg30.txt")
 
 	if flag9000_1:
 		print "1st 9000 has been reached"
