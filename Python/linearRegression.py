@@ -103,12 +103,12 @@ def aggregatePhraseScore(timeSeries, aggregateCoefficient):
 	return result
 
 if (__name__ == "__main__"):
-	fileName = "keyPhraseTimeSeries5000WithScalingx100-archive2.txt"
+	fileName = "phrase-agg30.txt"
 	# fileName = "keyPhraseTimeSeries.txt"
 	# fileName = "keyAuthorTimeSeriesWithScalingx100.txt"
-	aggregateCoefficient = 0.4
+	aggregateCoefficient = 0.3
 	phraseList, timeSeries = readTimeSeriesData(fileName)
-	timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
+	#timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
 	windowSize = 3
 	testSize = 20
 
@@ -146,16 +146,16 @@ if (__name__ == "__main__"):
 		plt.title("Train: blue; Test: green; Starting Year: " + str(2015 - yearCover - windowSize + index))
 		plt.ylabel("Residuals")
 		# plt.savefig("full80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-linear-scaled.png")
-		plt.savefig("phrase80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
+		plt.savefig("prehits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
 		plt.close()
 
 	# writeScore(meanSquareError, "full80/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(varianceScore, "full80/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(coefRegression, "full80/coef-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 
-	writeScore(meanSquareError, "phrase80/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
-	writeScore(varianceScore, "phrase80/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
-	writeScore(coefRegression, "phrase80/coef-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(meanSquareError, "prehits/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(varianceScore, "prehits/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(coefRegression, "prehits/coef-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
 
 	# coefRegressionPhrase = {}
 	# alphaList = {}
