@@ -1,0 +1,15 @@
+Now the problem of the negative prediction can be seen in this way:
+y = ax0 + bx1 + cx2, for a lot of (x0, x1, x2) data points
+It is totally possible that one of the coefficients a, b, and c is negative
+even though all y are positive (simple illustration: x0, x1, x2 all positive, but y is smaller than the sum of them, then there must be one coefficient which is negative)
+After that, given a new set of data, x0, x1, x2, suppose a is negative, and x0 is very big, then ax0 + bx1 + cx2 is intuitively negative -> predict a negative value even if all training y values are positive
+
+Regarding the line shown in the plot, notice that a straight line can be interpreted as: prediction - actual = prediction + k (as in the current implementation)
+When k = 0 (passing through origin), it means actual data = 0 (true as a lot of 0 in the data set)
+
+When k = Constant (not 0), by simplicity actual data = Constant
+This means for a lot of phrases, their scores for this particular year is the same (this constant) !!! -> can write functions to check
+Then the question becomes: why they have the same score?
+Trace back to the regression.py where scores are generated, for a partiular year, HITS over based on phrase-author map and author-phrase map.
+This means those phrases have similar authors and authors write about similar phrases!
+Can be used as TOPIC!!!!!

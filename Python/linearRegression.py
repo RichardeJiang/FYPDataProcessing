@@ -105,7 +105,7 @@ def aggregatePhraseScore(timeSeries, aggregateCoefficient):
 if (__name__ == "__main__"):
 	fileName = "phrase-agg30.txt"
 	# fileName = "keyPhraseTimeSeries.txt"
-	# fileName = "keyAuthorTimeSeriesWithScalingx100.txt"
+	fileName = "keyPhraseTimeSeries5000WithScalingx100-archive2.txt"
 	aggregateCoefficient = 0.3
 	phraseList, timeSeries = readTimeSeriesData(fileName)
 	#timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
@@ -132,34 +132,49 @@ if (__name__ == "__main__"):
 	for index in range(yearCover):
 		XList = fullXList[index]
 		YList = fullYList[index]
+		print "XList length: " + str(len(XList))
+		print "YList length: " + str(len(YList))
+
 		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = float(testSize / 100.0), random_state = 42)
+		print "XTrain:"
+		print XTrain
+
+		print "YTRain:"
+		print YTrain
 		regression.fit(XTrain, YTrain)
 
 		meanSquareError[2015 - yearCover - windowSize + index] = np.mean((regression.predict(XTest) - YTest) ** 2)
 		varianceScore[2015 - yearCover - windowSize + index] = regression.score(XTest, YTest)
 		coefRegression[2015 - yearCover - windowSize + index] = regression.coef_
 
-		plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
-		plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
+		# plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
+		# plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
+		# plt.hlines(y = 0, xmin = 0, xmax = 100)
+		# #plt.hlines(y = 0, xmin = 0, xmax = 0.1)
+		# plt.title("Train: blue; Test: green; Starting Year: " + str(2015 - yearCover - windowSize + index))
+		# plt.ylabel("Residuals")
+		# # plt.savefig("full80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-linear-scaled.png")
+		# plt.savefig("prehits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
+		# plt.close()
+
+
+		plt.scatter(regression.predict(XTrain), YTrain - regression.predict(XTrain), color = 'b', s = 40, alpha = 0.5)
+		plt.scatter(regression.predict(XTest), YTest - regression.predict(XTest), color = 'g', s = 40)
 		plt.hlines(y = 0, xmin = 0, xmax = 100)
-		#plt.hlines(y = 0, xmin = 0, xmax = 0.1)
 		plt.title("Train: blue; Test: green; Starting Year: " + str(2015 - yearCover - windowSize + index))
 		plt.ylabel("Residuals")
-		# plt.savefig("full80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-linear-scaled.png")
-		plt.savefig("prehits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
+		plt.savefig("posthits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
 		plt.close()
 
-		plt.scatter(XTrain, YTrain - regression.predict(XTrain), color = 'b', s = 40, alpha = 0.5)
-		plt.scatter(XTest, YTest - regression.predict(XTest), color = 'g', s = 40)
-		plt.hlines(y = 0, xmin = 0, xmax = 100)
+		break
 
 	# writeScore(meanSquareError, "full80/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(varianceScore, "full80/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(coefRegression, "full80/coef-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 
-	writeScore(meanSquareError, "prehits/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
-	writeScore(varianceScore, "prehits/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
-	writeScore(coefRegression, "prehits/coef-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(meanSquareError, "posthits/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(varianceScore, "posthits/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(coefRegression, "posthits/coef-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
 
 	# coefRegressionPhrase = {}
 	# alphaList = {}
