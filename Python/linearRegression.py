@@ -149,6 +149,10 @@ if (__name__ == "__main__"):
 		plt.savefig("phrase80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
 		plt.close()
 
+		plt.scatter(XTrain, YTrain - regression.predict(XTrain), color = 'b', s = 40, alpha = 0.5)
+		plt.scatter(XTest, YTest - regression.predict(XTest), color = 'g', s = 40)
+		plt.hlines(y = 0, xmin = 0, xmax = 100)
+
 	# writeScore(meanSquareError, "full80/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(varianceScore, "full80/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(coefRegression, "full80/coef-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
