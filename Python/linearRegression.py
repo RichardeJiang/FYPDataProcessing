@@ -3,6 +3,7 @@ import numpy as np
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from collections import Counter
 
 def writeScore(dictFile, fileName):
 	theFile = open(fileName, "w")
@@ -101,6 +102,37 @@ def aggregatePhraseScore(timeSeries, aggregateCoefficient):
 			result[phraseIndex][index + 1] = result[phraseIndex][index + 1] * (1 - aggregateCoefficient) + result[phraseIndex][index] * aggregateCoefficient
 
 	return result
+
+def checkTopScoresInSeries(timeSeries):
+	npSeries = np.asarray(timeSeries)
+	npSeries = np.transpose(npSeries)
+	allowanceRange = 3
+	desiredCommonNumber = 5
+	phraseIndexList = []
+	for phraseScoreEachYear in npSeries:
+		phraseApproximateScore = []
+		identicalItems = []
+		phraseIndexListYear = []
+		for phraseScore in phraseScoreEachYear:
+			approximateScore = int(phraseScore)
+			# phraseApproximateScore.append(approximateScore)
+			approximateSet = set(range(approximateScore - allowanceRange, approximateScore + allowanceRange + 1))
+			# approximateSet = set([approximateScore - 2, approximateScore - 1, approximateScore, approximateScore + 1, approximateScore + 2])
+			shownItems = list(set(identicalItems) & approximateSet)
+			if len(set(shownItems)) == 0:
+				identicalItems.append(approximateScore)
+				phraseApproximateScore.append(approximateScore)
+			else:
+				phraseApproximateScore.append(min(shownItems))
+
+		mostCommonTerms = [ele[0] for ele in Counter(phraseApproximateScore).most_common(desiredCommomnNumber)]
+		for index in range(len(phraseScoreEachYear)):
+			if phraseApproximateScore[index] in mostCommonTerms:
+				phraseIndexListYear.append(index)
+		phraseIndexList.append(phraseIndexListYear)
+
+	#npSeries = npSeries.T
+	return phraseIndexList
 
 if (__name__ == "__main__"):
 	fileName = "phrase-agg30.txt"
