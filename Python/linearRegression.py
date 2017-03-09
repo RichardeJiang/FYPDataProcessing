@@ -108,7 +108,6 @@ def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3, checkAllowance =
 	npSeries = np.asarray(timeSeries)
 	npSeries = np.transpose(npSeries)
 	allowanceRange = checkAllowance
-	# desiredCommonNumber = 3
 	phraseIndexList = []
 	for phraseScoreEachYear in npSeries:
 		phraseApproximateScore = []
@@ -116,9 +115,7 @@ def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3, checkAllowance =
 		phraseIndexListYear = [[] for n in range(desiredCommonNumber)]
 		for phraseScore in phraseScoreEachYear:
 			approximateScore = int(phraseScore)
-			# phraseApproximateScore.append(approximateScore)
 			approximateSet = set(range(approximateScore - allowanceRange, approximateScore + allowanceRange + 1))
-			# approximateSet = set([approximateScore - 2, approximateScore - 1, approximateScore, approximateScore + 1, approximateScore + 2])
 			shownItems = list(set(identicalItems) & approximateSet)
 			if len(set(shownItems)) == 0:
 				identicalItems.append(approximateScore)
@@ -132,10 +129,8 @@ def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3, checkAllowance =
 		else:
 			mostCommonTerms = mostCommonTerms[:desiredCommonNumber]
 		for index in range(len(phraseScoreEachYear)):
-			# if phraseApproximateScore[index] == mostCommonTerms[0]
 			if phraseApproximateScore[index] in mostCommonTerms:
 				phraseIndexListYear[mostCommonTerms.index(phraseApproximateScore[index])].append(index) 
-				# phraseIndexListYear.append(index)
 		phraseIndexList.append(phraseIndexListYear)
 
 	return phraseIndexList
@@ -159,13 +154,13 @@ if (__name__ == "__main__"):
 	fileName = "phrase-agg30.txt"
 	# fileName = "keyPhraseTimeSeries.txt"
 	fileName = "keyPhraseTimeSeries5000WithScalingx100-archive2.txt"
-	aggregateCoefficient = 0
+	aggregateCoefficient = 0.2
 	phraseList, timeSeries = readTimeSeriesData(fileName)
-	#timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
+	timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
 	windowSize = 3
 	testSize = 20
-	desiredCommonNumber = 10
-	checkAllowance = 2
+	desiredCommonNumber = 5
+	checkAllowance = 4
 
 	# This part is to compute the common scores to obtain the phrases sharing similar scores in one year
 	commonPhrasesIndexList = checkTopScoresInSeries(timeSeries, desiredCommonNumber, checkAllowance)
@@ -178,7 +173,7 @@ if (__name__ == "__main__"):
 			phraseListThisYear[currCommonNumber] = mapPhraseListUsingIndex(phraseIndexListThisYear[currCommonNumber], phraseList)[:20]
 		phraseListTotal.append(phraseListThisYear)
 
-	writePhraseListTotal(phraseListTotal, "topics-window-" + str(desiredCommonNumber) + "-allow-" + str(checkAllowance) + ".txt")
+	writePhraseListTotal(phraseListTotal, "topicsWithAgg-" + str(desiredCommonNumber) + "-allow-" + str(checkAllowance) + ".txt")
 	
 	# End of score computation part
 
@@ -210,15 +205,8 @@ if (__name__ == "__main__"):
 	for index in range(yearCover):
 		XList = fullXList[index]
 		YList = fullYList[index]
-		# print "XList length: " + str(len(XList))
-		# print "YList length: " + str(len(YList))
 
 		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = float(testSize / 100.0), random_state = 42)
-		# print "XTrain:"
-		# print XTrain
-
-		# print "YTRain:"
-		# print YTrain
 		regression.fit(XTrain, YTrain)
 
 		meanSquareError[2015 - yearCover - windowSize + index] = np.mean((regression.predict(XTest) - YTest) ** 2)

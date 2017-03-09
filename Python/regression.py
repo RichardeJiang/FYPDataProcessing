@@ -296,9 +296,9 @@ def readKeyphrasesFromFile(fileName):
 			parts = line.split(":")
 			top500Phrases.append(parts[0])
 			index += 1
-			if index > 5000:
+			if index > 20000:
 				break
-	return top500Phrases[:5000]
+	return top500Phrases[:20000]
 
 def aggregatePhraseScore(keyPhraseScoreTimeSeries):
 	aggregateCoefficient = 0.2
@@ -471,12 +471,23 @@ if (__name__ == '__main__'):
 	startingYear = phraseScoreListList.index(tempPhraseScoreListList[0])
 	years = len(tempPhraseScoreListList)
 
+	# This part is used when pre-HITS aggregation runs
+	# for i in range(years):
+	# 	tempAuthorScoreMap = {k:v for k, v in sorted_scoreDict.items() if k in authorPhraseMapList[i + startingYear].keys()}
+	# 	if i > 0:
+	# 		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITSMix(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear], phraseScoreListList[i + startingYear - 1], authorScoreListList[i + startingYear - 1])
+	# 	else :
+	# 		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
+	# End of pre-HITS computation
+
+
+	# This part is used when no aggregation is applied
 	for i in range(years):
 		tempAuthorScoreMap = {k:v for k, v in sorted_scoreDict.items() if k in authorPhraseMapList[i + startingYear].keys()}
-		if i > 0:
-			phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITSMix(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear], phraseScoreListList[i + startingYear - 1], authorScoreListList[i + startingYear - 1])
-		else :
-			phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
+		phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], authorScoreListList[i + startingYear], authorPhraseMapList[i + startingYear] = HITS(phraseScoreListList[i + startingYear], phraseAuthorMapList[i + startingYear], tempAuthorScoreMap, authorPhraseMapList[i + startingYear])
+
+	# End of non-aggregation compuation
+
 	# Now this is the regression data to be used
 	#phraseScoreListList = [ele[startingYear:] for ele in phraseScoreListList]
 	keyAuthorList = [item[0] for item in sorted_scoreList]
@@ -485,8 +496,8 @@ if (__name__ == '__main__'):
 	keyphraseTimeSeries = getLastingPhrasesDirect(phraseScoreListList, keyphrasesList)
 	keyAuthorTimeSeries = getLastingAuthorsDirect(authorScoreListList, keyAuthorList)
 	
-	writeListToFile(keyphraseTimeSeries, "d/keyPhraseTimeSeries5000WithScalingx100-agg30.txt")
-	writeListToFile(keyAuthorTimeSeries, "d/keyAuthorTimeSeriesWithScalingx100-agg30.txt")
+	writeListToFile(keyphraseTimeSeries, "e/keyPhraseTimeSeries20000WithScalingx100.txt")
+	# writeListToFile(keyAuthorTimeSeries, "e/keyAuthorTimeSeriesWithScalingx100.txt")
 
 	if flag9000_1:
 		print "1st 9000 has been reached"
