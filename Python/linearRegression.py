@@ -127,7 +127,7 @@ def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3):
 
 		mostCommonTerms = [ele[0] for ele in Counter(phraseApproximateScore).most_common(desiredCommonNumber + 1)]
 		if 0 in mostCommonTerms:
-			mostCommonTerms = [ele in mostCommonTerms if ele != 0]
+			mostCommonTerms = [ele for ele in mostCommonTerms if ele != 0]
 		else:
 			mostCommonTerms = mostCommonTerms[:desiredCommonNumber]
 		for index in range(len(phraseScoreEachYear)):
@@ -139,6 +139,21 @@ def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3):
 
 	return phraseIndexList
 
+def mapPhraseListUsingIndex(phraseIndexList, phraseList):
+	result = [phraseList[ele] for ele in phraseIndexList]
+	return result
+
+def writePhraseListTotal(phraseList, fileName):
+	tf = open(fileName, "w")
+
+	for phraseListThisYear in phraseList:
+		for phraseListSub in phraseListThisYear:
+			tf.write("%s\n" % str(phraseListSub))
+		tf.write("\n")
+
+	tf.close()
+	return
+
 if (__name__ == "__main__"):
 	fileName = "phrase-agg30.txt"
 	# fileName = "keyPhraseTimeSeries.txt"
@@ -148,9 +163,20 @@ if (__name__ == "__main__"):
 	#timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
 	windowSize = 3
 	testSize = 20
+	desiredCommonNumber = 3
 
 	# This part is to compute the common scores to obtain the phrases sharing similar scores in one year
-	commonPhrasesIndexList = checkTopScoresInSeries(timeSeries)
+	commonPhrasesIndexList = checkTopScoresInSeries(timeSeries, desiredCommonNumber)
+	phraseListTotal = []
+	years = len(commonPhrasesIndexList)
+	numOfPhrases = len(phraseList)
+	for phraseIndexListThisYear in commonPhrasesIndexList:
+		phraseListThisYear = [[] for n in range(desiredCommonNumber)]
+		for currCommonNumber in range(desiredCommonNumber):
+			phraseListThisYear[currCommonNumber] = mapPhraseListUsingIndex(phraseIndexListThisYear[currCommonNumber], phraseList)[:20]
+		phraseListTotal.append(phraseListThisYear)
+
+	writePhraseListTotal(phraseListTotal, "experiment-topics.txt")
 	
 	# End of score computation part
 
@@ -208,7 +234,7 @@ if (__name__ == "__main__"):
 		plt.savefig("posthits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
 		plt.close()
 
-		break
+		# break
 
 	# writeScore(meanSquareError, "full80/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(varianceScore, "full80/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
