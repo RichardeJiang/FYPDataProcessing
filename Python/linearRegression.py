@@ -103,16 +103,16 @@ def aggregatePhraseScore(timeSeries, aggregateCoefficient):
 
 	return result
 
-def checkTopScoresInSeries(timeSeries):
+def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3):
 	npSeries = np.asarray(timeSeries)
 	npSeries = np.transpose(npSeries)
 	allowanceRange = 3
-	desiredCommonNumber = 5
+	# desiredCommonNumber = 3
 	phraseIndexList = []
 	for phraseScoreEachYear in npSeries:
 		phraseApproximateScore = []
 		identicalItems = []
-		phraseIndexListYear = []
+		phraseIndexListYear = [[] for n in range(desiredCommonNumber)]
 		for phraseScore in phraseScoreEachYear:
 			approximateScore = int(phraseScore)
 			# phraseApproximateScore.append(approximateScore)
@@ -125,13 +125,18 @@ def checkTopScoresInSeries(timeSeries):
 			else:
 				phraseApproximateScore.append(min(shownItems))
 
-		mostCommonTerms = [ele[0] for ele in Counter(phraseApproximateScore).most_common(desiredCommomnNumber)]
+		mostCommonTerms = [ele[0] for ele in Counter(phraseApproximateScore).most_common(desiredCommonNumber + 1)]
+		if 0 in mostCommonTerms:
+			mostCommonTerms = [ele in mostCommonTerms if ele != 0]
+		else:
+			mostCommonTerms = mostCommonTerms[:desiredCommonNumber]
 		for index in range(len(phraseScoreEachYear)):
+			# if phraseApproximateScore[index] == mostCommonTerms[0]
 			if phraseApproximateScore[index] in mostCommonTerms:
-				phraseIndexListYear.append(index)
+				phraseIndexListYear[mostCommonTerms.index(phraseApproximateScore[index])].append(index) 
+				# phraseIndexListYear.append(index)
 		phraseIndexList.append(phraseIndexListYear)
 
-	#npSeries = npSeries.T
 	return phraseIndexList
 
 if (__name__ == "__main__"):
@@ -143,6 +148,11 @@ if (__name__ == "__main__"):
 	#timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
 	windowSize = 3
 	testSize = 20
+
+	# This part is to compute the common scores to obtain the phrases sharing similar scores in one year
+	commonPhrasesIndexList = checkTopScoresInSeries(timeSeries)
+	
+	# End of score computation part
 
 	dataXList, dataYList = splitData(timeSeries)
 	dataXList = np.asarray(dataXList)
