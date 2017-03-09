@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
@@ -83,7 +84,7 @@ def formBinaryTrainingList(localCoef, XList, YList, globalCoefList):
 	return resultXList, resultYList
 
 def aggregatePhraseScore(keyPhraseScoreTimeSeries):
-	aggregateCoefficient = 0.2
+	aggregateCoefficient = 0
 	years = len(keyPhraseScoreTimeSeries.values()[0])
 	numOfPhrases = len(keyPhraseScoreTimeSeries)
 	result = {key:[0 for n in range(years)] for key in keyPhraseScoreTimeSeries}
@@ -103,10 +104,10 @@ def aggregatePhraseScore(timeSeries, aggregateCoefficient):
 
 	return result
 
-def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3):
+def checkTopScoresInSeries(timeSeries, desiredCommonNumber = 3, checkAllowance = 2):
 	npSeries = np.asarray(timeSeries)
 	npSeries = np.transpose(npSeries)
-	allowanceRange = 3
+	allowanceRange = checkAllowance
 	# desiredCommonNumber = 3
 	phraseIndexList = []
 	for phraseScoreEachYear in npSeries:
@@ -158,15 +159,16 @@ if (__name__ == "__main__"):
 	fileName = "phrase-agg30.txt"
 	# fileName = "keyPhraseTimeSeries.txt"
 	fileName = "keyPhraseTimeSeries5000WithScalingx100-archive2.txt"
-	aggregateCoefficient = 0.3
+	aggregateCoefficient = 0
 	phraseList, timeSeries = readTimeSeriesData(fileName)
 	#timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
 	windowSize = 3
 	testSize = 20
-	desiredCommonNumber = 3
+	desiredCommonNumber = 10
+	checkAllowance = 2
 
 	# This part is to compute the common scores to obtain the phrases sharing similar scores in one year
-	commonPhrasesIndexList = checkTopScoresInSeries(timeSeries, desiredCommonNumber)
+	commonPhrasesIndexList = checkTopScoresInSeries(timeSeries, desiredCommonNumber, checkAllowance)
 	phraseListTotal = []
 	years = len(commonPhrasesIndexList)
 	numOfPhrases = len(phraseList)
@@ -176,9 +178,17 @@ if (__name__ == "__main__"):
 			phraseListThisYear[currCommonNumber] = mapPhraseListUsingIndex(phraseIndexListThisYear[currCommonNumber], phraseList)[:20]
 		phraseListTotal.append(phraseListThisYear)
 
-	writePhraseListTotal(phraseListTotal, "experiment-topics.txt")
+	writePhraseListTotal(phraseListTotal, "topics-window-" + str(desiredCommonNumber) + "-allow-" + str(checkAllowance) + ".txt")
 	
 	# End of score computation part
+
+	newTimeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
+
+	if newTimeSeries == timeSeries:
+		print "true; equal"
+		sys.exit(1)
+	else:
+		print "false: some diff"
 
 	dataXList, dataYList = splitData(timeSeries)
 	dataXList = np.asarray(dataXList)
@@ -200,39 +210,39 @@ if (__name__ == "__main__"):
 	for index in range(yearCover):
 		XList = fullXList[index]
 		YList = fullYList[index]
-		print "XList length: " + str(len(XList))
-		print "YList length: " + str(len(YList))
+		# print "XList length: " + str(len(XList))
+		# print "YList length: " + str(len(YList))
 
 		XTrain, XTest, YTrain, YTest = train_test_split(XList, YList, test_size = float(testSize / 100.0), random_state = 42)
-		print "XTrain:"
-		print XTrain
+		# print "XTrain:"
+		# print XTrain
 
-		print "YTRain:"
-		print YTrain
+		# print "YTRain:"
+		# print YTrain
 		regression.fit(XTrain, YTrain)
 
 		meanSquareError[2015 - yearCover - windowSize + index] = np.mean((regression.predict(XTest) - YTest) ** 2)
 		varianceScore[2015 - yearCover - windowSize + index] = regression.score(XTest, YTest)
 		coefRegression[2015 - yearCover - windowSize + index] = regression.coef_
 
-		# plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
-		# plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
-		# plt.hlines(y = 0, xmin = 0, xmax = 100)
-		# #plt.hlines(y = 0, xmin = 0, xmax = 0.1)
-		# plt.title("Train: blue; Test: green; Starting Year: " + str(2015 - yearCover - windowSize + index))
-		# plt.ylabel("Residuals")
-		# # plt.savefig("full80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-linear-scaled.png")
-		# plt.savefig("prehits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
-		# plt.close()
-
-
-		plt.scatter(regression.predict(XTrain), YTrain - regression.predict(XTrain), color = 'b', s = 40, alpha = 0.5)
-		plt.scatter(regression.predict(XTest), YTest - regression.predict(XTest), color = 'g', s = 40)
+		plt.scatter(regression.predict(XTrain), regression.predict(XTrain) - YTrain, color = 'b', s =40, alpha = 0.5)
+		plt.scatter(regression.predict(XTest), regression.predict(XTest) - YTest, color = 'g', s = 40)
 		plt.hlines(y = 0, xmin = 0, xmax = 100)
+		#plt.hlines(y = 0, xmin = 0, xmax = 0.1)
 		plt.title("Train: blue; Test: green; Starting Year: " + str(2015 - yearCover - windowSize + index))
 		plt.ylabel("Residuals")
-		plt.savefig("posthits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
+		# plt.savefig("full80/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-linear-scaled.png")
+		plt.savefig("prehits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
 		plt.close()
+
+
+		# plt.scatter(regression.predict(XTrain), YTrain - regression.predict(XTrain), color = 'b', s = 40, alpha = 0.5)
+		# plt.scatter(regression.predict(XTest), YTest - regression.predict(XTest), color = 'g', s = 40)
+		# plt.hlines(y = 0, xmin = 0, xmax = 100)
+		# plt.title("Train: blue; Test: green; Starting Year: " + str(2015 - yearCover - windowSize + index))
+		# plt.ylabel("Residuals")
+		# plt.savefig("posthits/" + str(2015 - yearCover - windowSize + index) + "-" + str(windowSize) + "-agg-" + str(aggregateCoefficient) + ".png")
+		# plt.close()
 
 		# break
 
