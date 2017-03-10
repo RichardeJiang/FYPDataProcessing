@@ -153,10 +153,10 @@ def writePhraseListTotal(phraseList, fileName):
 if (__name__ == "__main__"):
 	fileName = "phrase-agg30.txt"
 	# fileName = "keyPhraseTimeSeries.txt"
-	fileName = "keyPhraseTimeSeries5000WithScalingx100-archive2.txt"
+	fileName = "keyPhraseTimeSeries20000WithScalingx100.txt"
 	aggregateCoefficient = 0.2
 	phraseList, timeSeries = readTimeSeriesData(fileName)
-	timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
+	# timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
 	windowSize = 3
 	testSize = 20
 	desiredCommonNumber = 5
@@ -173,7 +173,7 @@ if (__name__ == "__main__"):
 			phraseListThisYear[currCommonNumber] = mapPhraseListUsingIndex(phraseIndexListThisYear[currCommonNumber], phraseList)[:20]
 		phraseListTotal.append(phraseListThisYear)
 
-	writePhraseListTotal(phraseListTotal, "topicsWithAgg-" + str(desiredCommonNumber) + "-allow-" + str(checkAllowance) + ".txt")
+	writePhraseListTotal(phraseListTotal, "20000topics-" + str(desiredCommonNumber) + "-allow-" + str(checkAllowance) + ".txt")
 	
 	# End of score computation part
 
