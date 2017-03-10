@@ -153,7 +153,7 @@ def writePhraseListTotal(phraseList, fileName):
 if (__name__ == "__main__"):
 	fileName = "phrase-agg30.txt"
 	# fileName = "keyPhraseTimeSeries.txt"
-	fileName = "keyPhraseTimeSeries20000WithScalingx100.txt"
+	fileName = "keyPhraseTimeSeries5000WithScalingx100-archive2.txt"
 	aggregateCoefficient = 0.2
 	phraseList, timeSeries = readTimeSeriesData(fileName)
 	# timeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
@@ -173,17 +173,17 @@ if (__name__ == "__main__"):
 			phraseListThisYear[currCommonNumber] = mapPhraseListUsingIndex(phraseIndexListThisYear[currCommonNumber], phraseList)[:20]
 		phraseListTotal.append(phraseListThisYear)
 
-	writePhraseListTotal(phraseListTotal, "20000topics-" + str(desiredCommonNumber) + "-allow-" + str(checkAllowance) + ".txt")
+	# writePhraseListTotal(phraseListTotal, "20000topics-" + str(desiredCommonNumber) + "-allow-" + str(checkAllowance) + ".txt")
 	
 	# End of score computation part
 
-	newTimeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
+	# newTimeSeries = aggregatePhraseScore(timeSeries, aggregateCoefficient)
 
-	if newTimeSeries == timeSeries:
-		print "true; equal"
-		sys.exit(1)
-	else:
-		print "false: some diff"
+	# if newTimeSeries == timeSeries:
+	# 	print "true; equal"
+	# 	# sys.exit(1)
+	# else:
+	# 	print "false: some diff"
 
 	dataXList, dataYList = splitData(timeSeries)
 	dataXList = np.asarray(dataXList)
@@ -194,6 +194,7 @@ if (__name__ == "__main__"):
 	fullYList = np.asarray(fullYList)
 
 	regression = linear_model.LinearRegression()
+	regression = linear_model.Lasso(alpha = 0.1, positive=True)
 	ridge = linear_model.Ridge(alpha = 0.5)
 	phraseCount = len(phraseList)
 	meanSquareError = {}
@@ -238,9 +239,9 @@ if (__name__ == "__main__"):
 	# writeScore(varianceScore, "full80/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 	# writeScore(coefRegression, "full80/coef-" + str(100 - testSize) + "-" + str(windowSize) + "-scaled.txt")
 
-	writeScore(meanSquareError, "posthits/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
-	writeScore(varianceScore, "posthits/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
-	writeScore(coefRegression, "posthits/coef-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(meanSquareError, "prehits/meanLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(varianceScore, "prehits/varianceLinear-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
+	writeScore(coefRegression, "prehits/coef-" + str(100 - testSize) + "-" + str(windowSize) + ".txt")
 
 	# coefRegressionPhrase = {}
 	# alphaList = {}
